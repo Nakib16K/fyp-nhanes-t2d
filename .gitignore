@@ -68,3 +68,11 @@ htmlcov/
 # -----------------------------------------------------------
 *.log
 *.tmp
+
+node_modules/
+
+.env
+
+reports/results/
+
+reports/figures/

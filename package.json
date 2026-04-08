@@ -1,0 +1,14 @@
+{
+  "name": "ml-explainability-platform",
+  "version": "1.0.0",
+  "description": "ML Model Explainability Platform",
+  "scripts": {
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "preview": "cd frontend && npm run preview",
+    "install": "cd frontend && npm install"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

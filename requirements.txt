@@ -1,0 +1,34 @@
+# requirements.txt
+
+# Core Data Handling
+pandas
+numpy
+requests          # Needed for data downloading from CDC
+
+# SAS File Ingestion (NHANES Data)
+pyreadstat
+
+# Machine Learning & Pipelines
+scikit-learn
+imbalanced-learn  # Essential for SMOTE pipeline integration
+xgboost           # SOTA tree model
+lightgbm          # SOTA tree model
+
+# Hyperparameter Tuning
+optuna            # For Bayesian Optimization
+
+# Model Persistence
+joblib            # Required for saving and loading FastAPI .pkl artifacts
+
+# Plotting & Explainability
+matplotlib
+seaborn
+shap              # For feature importance and explainability
+
+# Backend API
+fastapi
+uvicorn
+pydantic
+
+# Testing
+pytest
