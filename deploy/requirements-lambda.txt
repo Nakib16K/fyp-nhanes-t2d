@@ -1,0 +1,3 @@
+# Adapter version observed in the accepted private Linux Lambda trial.
+# Future rebuild inputs/acceptance remain separate; see docs/REPRODUCIBILITY.md.
+mangum==0.22.0

@@ -110,8 +110,9 @@ NOMINAL_VARS = [
 ]
 
 ORDINAL_VARS = [
-    'education_level', 
-    'alcohol_frequency'
+    'education_level',
+    # ALQ120Q is not harmonised across NHANES cycles and was unused
+    # in all 40 previously fitted preprocessors. It is NOT a predictor.
 ]
 
 NUMERICAL_VARS = [
@@ -127,15 +128,15 @@ NUMERICAL_VARS = [
     # ----------------------------------------------------------------
     # EXCLUDED FEATURES: MULTICOLLINEARITY & NOISE REDUCTION
     # ----------------------------------------------------------------
-    # The following features are intentionally commented out based on EDA 
-    # and clinical literature review. Including them alongside BMI and 
-    # Waist Circumference introduces severe multicollinearity, artificially 
-    # skewing model weights (especially for Logistic Regression).
+    # The following variables were excluded during the original EDA and
+    # literature-based feature selection. Some overlap with the selected body
+    # measurements. These comments document that choice; they do not establish
+    # a causal effect or an additional performance gain.
     
     # 'weight_kg',                 # Redundant: Captured by BMI
     # 'height_cm',                 # Redundant: Captured by BMI
     # 'arm_circumference_cm',      # Redundant: Correlates heavily with overall adiposity/BMI
-    # 'arm_length_upper_cm',       # Low correlation (0.04) with target; introduces noise
+    # 'arm_length_upper_cm',       # Excluded during the original feature selection
     # 'leg_length_upper_cm',       # Low clinical relevance to T2D compared to visceral fat
     # 'highest_weight_ever_kg',    # Prone to self-reporting bias and redundant with current BMI
     

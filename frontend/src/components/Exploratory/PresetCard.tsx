@@ -16,20 +16,20 @@ interface PresetCardProps {
 
 const PRESET_LABELS: Record<string, { name: string; description: string }> = {
   healthy: {
-    name: "Healthy Profile",
-    description: "A typical healthy individual with normal vital signs",
+    name: "Lower-Risk-Factor Example",
+    description: "Illustrative inputs with fewer conventional risk factors",
   },
   elevated_risk: {
-    name: "Elevated Risk Factors",
-    description: "An individual with multiple accumulated risk factors",
+    name: "Middle-Risk-Factor Example",
+    description: "Illustrative inputs with several risk factors",
   },
   high_risk: {
-    name: "High Risk Profile",
-    description: "An individual with multiple diabetes risk factors",
+    name: "Higher-Risk-Factor Example",
+    description: "Illustrative inputs with multiple risk factors",
   },
 };
 
-// Human-readable labels for all 16 preset variables
+// Human-readable labels for all current preset inputs
 const VARIABLE_LABELS: Record<string, string> = {
   age_years:               "Age (years)",
   gender_code:             "Gender",
@@ -46,14 +46,19 @@ const VARIABLE_LABELS: Record<string, string> = {
   smoked_100_cigs:         "Smoked 100+ Cigarettes",
   family_history_diabetes: "Family Diabetes History",
   vigorous_activity:       "Vigorous Activity",
-  alcohol_frequency:       "Alcohol Frequency (days/year)",
 };
 
-const YES_NO_FIELDS = ["history_high_bp", "smoked_100_cigs", "family_history_diabetes", "vigorous_activity"];
+const YES_NO_FIELDS = [
+  "history_high_bp",
+  "smoked_100_cigs",
+  "family_history_diabetes",
+  "vigorous_activity",
+];
 const GENDER_MAP: Record<number, string> = { 1: "Male", 2: "Female" };
 const ETHNICITY_MAP: Record<number, string> = {
   1: "Mexican American", 2: "Other Hispanic", 3: "Non-Hispanic White",
   4: "Non-Hispanic Black", 6: "Non-Hispanic Asian",
+  7: "Other / Multi-Racial",
 };
 const EDUCATION_MAP: Record<number, string> = {
   1: "Less than 9th grade", 2: "9–11th grade", 3: "High school / GED",
@@ -83,13 +88,12 @@ export function PresetCard({
   const label = PRESET_LABELS[name] || { name, description: "" };
   const bmi = preset.weight_kg / ((preset.height_cm / 100) ** 2);
 
-  const avgRisk = prediction
-    ? Object.values(prediction.predictions).reduce((sum, p) => sum + (p.probability_score || 0), 0) /
-      Object.keys(prediction.predictions).length
-    : 0;
-
-  const getRiskColor = (r: number) => r < 0.33 ? "text-green-600" : r < 0.66 ? "text-yellow-600" : "text-red-600";
-  const getRiskBgColor = (r: number) => r < 0.33 ? "bg-green-50" : r < 0.66 ? "bg-yellow-50" : "bg-red-50";
+  const scores = prediction
+    ? Object.values(prediction.predictions).map((p) => p.probability_score)
+    : [];
+  const avgEstimate = scores.length === 4 && scores.every(Number.isFinite)
+    ? scores.reduce((sum, p) => sum + p, 0) / 4
+    : null;
 
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden bg-white flex flex-col">
@@ -99,7 +103,7 @@ export function PresetCard({
           <h3 className="text-lg font-bold text-gray-900">{label.name}</h3>
           <p className="text-sm text-gray-600 mt-1 min-h-[40px]">{label.description}</p>
         </div>
-        {/* Info button — shows all 16 variables */}
+        {/* Info button — shows current variables */}
         <button
           onClick={() => setShowInfo(!showInfo)}
           title="Show all variable values"
@@ -109,7 +113,7 @@ export function PresetCard({
         </button>
       </div>
 
-      {/* Info panel — all 16 variables */}
+      {/* Info panel — all current inputs */}
       {showInfo && (
         <div className="px-6 pb-4 border-t border-gray-100 bg-gray-50">
           <p className="text-xs font-semibold text-gray-500 uppercase mt-3 mb-2">All Variable Values</p>
@@ -171,24 +175,36 @@ export function PresetCard({
         {/* Prediction results */}
         {prediction && (
           <>
-            <div className={`p-4 rounded-lg ${getRiskBgColor(avgRisk)}`}>
-              <p className="text-xs text-gray-600 uppercase font-semibold mb-2">
-                Prediction Results (Average Across Models)
+            <div className="p-4 rounded-lg bg-blue-50 border border-blue-100">
+              <p className="text-xs text-gray-700 uppercase font-semibold mb-2">
+                Illustrative arithmetic mean of four model estimates
               </p>
-              <p className={`text-2xl font-bold ${getRiskColor(avgRisk)}`}>
-                {(avgRisk * 100).toFixed(1)}% Risk
+              <p className="text-2xl font-bold text-blue-900">
+                {avgEstimate === null ? "Unavailable" : `${(avgEstimate * 100).toFixed(1)}%`}
+              </p>
+              <p className="text-xs text-gray-700 mt-1">
+                Not a validated ensemble probability or a clinical risk score.
+                A displayed 0.0% is rounding, not zero disease risk.
               </p>
               <div className="mt-4 space-y-2">
                 {Object.entries(prediction.predictions).map(([modelName, pred]) => (
-                  <div key={modelName} className="text-sm">
-                    <span className="font-medium">{modelName}:</span>{" "}
-                    <span className={getRiskColor(pred.probability_score)}>
-                      {pred.risk_percentage}
-                    </span>
-                    <span className="text-gray-600 ml-2">({pred.prediction_class})</span>
+                  <div key={modelName} className="text-sm space-y-0.5">
+                    <div><span className="font-medium">{modelName}:</span>{" "}
+                      <span className="text-blue-800">{pred.risk_percentage}</span></div>
+                    <p className="text-xs text-gray-700">
+                      {typeof pred.above_threshold === "boolean"
+                        ? pred.above_threshold ? "Above model threshold" : "Below model threshold"
+                        : "Decision flag unavailable"}
+                      {typeof pred.decision_threshold === "number" &&
+                        ` · Cutoff ${(pred.decision_threshold * 100).toFixed(2)}%`}
+                    </p>
                   </div>
                 ))}
               </div>
+              <p className="text-xs text-gray-600 mt-3">
+                Each threshold was selected on validation data for that individual model.
+                It is not a medical cutoff; model flags may disagree.
+              </p>
             </div>
 
             {/* SHAP toggle button */}
@@ -211,7 +227,7 @@ export function PresetCard({
 
             {/* SHAP visualization */}
             {shapResult && showShap && !shapLoading && (
-              <SHAPVisualization result={shapResult} />
+              <SHAPVisualization result={shapResult} alignRows />
             )}
           </>
         )}
