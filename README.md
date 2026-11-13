@@ -1,234 +1,63 @@
 # Predicting Diabetes using Anthropometric, Lifestyle and Demographic Data
 
-BSc Computer Science Final Year Project (CS3072/CS3605)
-Brunel University London   
-Student ID: 2220769
+BSc Computer Science project, Brunel University London. Author: Abdullah Al Nakib.
 
-## Overview
+This project compares machine learning models using NHANES 2013-2018 anthropometric, lifestyle and demographic data. The current educational application estimates a cross-sectional, survey-defined diabetes-status proxy. It is not a diagnosis, a clinically validated risk score or a prediction of future Type 2 diabetes incidence.
 
-A comparative machine learning framework that predicts Type 2 Diabetes risk using strictly non-invasive variables from the National Health and Nutrition Examination Survey (NHANES, 2013 to 2018). Four classifiers (Logistic Regression, Random Forest, XGBoost, LightGBM) are trained under three class-balancing strategies (SMOTE, random undersampling, class-weight adjustment) with Bayesian hyperparameter optimisation. The system includes SHAP-based explainability, a demographic fairness audit, and an interactive web application built with React and FastAPI.
+The April dissertation and the later corrected experiment are separate historical records. The current predictor contract has 15 predictors; model-specific decision thresholds come from validation data. SHAP explains an uncalibrated base estimator, rather than decomposing the final calibrated percentage. See the [methodology notes](docs/DISSERTATION_NOTES.md), [reference corrections](docs/REFERENCE_CORRECTIONS.md) and [post-submission development record](docs/POST_SUBMISSION_DEVELOPMENT.md).
 
-## Tech Stack
+## What this source contains
 
-| Component | Technology |
-|---|---|
-| Language | Python 3.12 |
-| ML Libraries | scikit-learn, XGBoost, LightGBM, imbalanced-learn |
-| Optimisation | Optuna (Bayesian, 50 trials per model) |
-| Explainability | SHAP (TreeExplainer, LinearExplainer) |
-| Backend | FastAPI, Uvicorn |
-| Frontend | React, TypeScript, Vite |
-| Testing | pytest |
-| Data Source | CDC NHANES (2013-2014, 2015-2016, 2017-2018) |
+- React/TypeScript frontend and FastAPI backend.
+- Research pipeline, preprocessing and evaluation code.
+- Run-bound artifact verification, decision-threshold and application controls.
+- Local tests, reference container recipes and documented runtime provenance.
+- The original EDA notebook code, with saved outputs/execution metadata removed and a historical-scope notice. It has not been rerun against a new dataset.
 
-## Project Structure
+Private models, raw/processed respondent data, prediction vectors, credentials and raw cloud evidence are not distributed here. Inference requires a separately supplied trusted, complete verified run. The source tree by itself does not include a running backend or trained model files.
 
-```
-root/
-├── main.py                         # Pipeline entry point
-├── conftest.py                     # Pytest path configuration
-├── requirements.txt                # Python dependencies
-├── api/
-│   ├── __init__.py
-│   └── main.py                     # FastAPI application
-├── src/
-│   ├── __init__.py
-│   ├── config.py                   # Feature lists, paths, NHANES mappings
-│   ├── data_loader.py              # NHANES data acquisition and merging
-│   ├── features.py                 # NHANESPreprocessor (fit/transform)
-│   ├── models.py                   # ModelFactory (Factory Design Pattern)
-│   └── pipeline.py                 # DiabetesPipeline orchestrator
-├── frontend/
-│   ├── package.json
-│   ├── vite.config.ts
-│   ├── tsconfig.json
-│   └── src/
-│       ├── App.tsx                  # Root application component
-│       ├── components/
-│       │   ├── ModelComparison/
-│       │   │   ├── ModelCard.tsx     # Per-model metric card
-│       │   │   └── ...              # Additional comparison components
-│       │   └── Exploratory/
-│       │       ├── ExploratoryMode.tsx
-│       │       ├── CustomPredictionForm.tsx
-│       │       ├── PresetCard.tsx
-│       │       ├── SHAPVisualization.tsx
-│       │       └── ...              # Additional exploratory components
-│       ├── hooks/
-│       │   └── usePresets.ts        # Preset state management
-│       │   └── ...        
-│       └── utils/
-│       │   └── api.ts               # API client utilities
-│       └── ...              
-├── tests/
-│   ├── __init__.py
-│   ├── test_pipeline.py            # 18 ML pipeline unit tests
-│   └── test_api.py                 # 13 FastAPI integration tests
-├── data/
-│   ├── raw/                        # Downloaded NHANES .xpt files
-│   │   └── ...                     # Multiple .xpt files per cycle
-│   └── processed/
-│       └── master_dataset.csv      # Merged and labelled dataset
-├── models/
-│   ├── best_params_*.json          # Cached hyperparameters
-│   └── ...                         # Serialised .pkl model files
-├── reports/
-│   └── run_YYYY-MM-DD_HH-MM-SS_<mode>/
-│       ├── summary_metrics.csv
-│       ├── algorithmic_fairness_report.csv
-│       ├── *_confusion_matrix.png
-│       ├── *_roc_curve.png
-│       ├── *_shap_summary.png
-│       ├── *_report.csv
-│       ├── *_interpretation.txt
-│       └── ...                     # Additional run outputs
-├── notebooks/
-│   └── EDA_Notebook.ipynb          # Exploratory Data Analysis
-└── README.md
+## Frontend checks and local preview
+
+The reviewed clean Windows installation used Node **24.22.2** and npm **11.19.1**. Verify `node --version` and `npm --version` in the shell used for the commands; no global npm upgrade was performed. Run these commands from `frontend`:
+
+```powershell
+npm ci --ignore-scripts
+npm run typecheck
+npm run lint
+npm run build
+npm run dev -- --host 127.0.0.1 --port 5173 --strictPort
 ```
 
-## Setup and Installation
+The fresh install/type/lint/build checks passed, and the generated files matched the earlier tested build byte for byte. The point-in-time npm audit returned no known findings. Lifecycle scripts were disabled during installation; the existing build works with that setting on the tested platform. Other operating systems need their own verification.
 
-### Prerequisites
+The frontend uses `http://localhost:8000` by default. `VITE_API_URL` can select an explicitly configured backend; it is public build configuration, so it must contain no secret. Prediction features require the separate backend and trusted artifacts described below. Use synthetic examples for development.
 
-- Python 3.12+
-- Node.js 18+ and npm
-- Git
+The root package also provides explicit `setup:frontend`, `typecheck`, `lint`, `build`, `dev` and `preview` wrappers. Its automatic install lifecycle was removed, so installing the root wrapper does not silently install frontend dependencies. Use the explicit setup command when intended. The historical root ISC metadata is retained; see the licensing note below.
 
-### 1. Clone the Repository
+## Local backend prerequisites
 
-```bash
-git clone <repository-url>
-cd fyp-nhanes-t2d
+Read [reproducibility and trusted inputs](docs/REPRODUCIBILITY.md) before starting the API. After a compatible Python environment and the verified private run have been prepared, the local entry point is:
+
+```powershell
+python -m uvicorn api.main:app --host 127.0.0.1 --port 8000 --workers 1
 ```
 
-### 2. Create Virtual Environment and Install Dependencies
+Startup aborts if no complete, consistent run is available. The default local CORS configuration supports the frontend on port 5173. This command is local inference startup; it does not train models or create cloud resources. Installation of the backend environment and a future container rebuild have separate prerequisites and limits in the reproducibility note.
 
-```bash
-python -m venv venv
+`main.py` is the research pipeline entry point. It can download data, tune, fit, calibrate and write a new experimental run. Its balancing/cache settings are source constants, not command-line flags. Research execution is a distinct workflow and is not part of the frontend/API setup above. The current frozen experiment is retained.
 
-# Windows
-venv\Scripts\activate
+## Evidence and limitations
 
-# macOS/Linux
-source venv/bin/activate
+The reviewed offline source suite passed 189 tests, with one Windows symlink-permission skip. A supplementary Linux check exercised that artifact-symlink rejection boundary successfully. Tests used synthetic preprocessing data and explicit in-process API/model mocks; no frozen model was loaded, no research fit was run and external downloads were blocked. Two dependency deprecation warnings are retained. These checks improve implementation coverage without establishing clinical validity.
 
-pip install -r requirements.txt
-```
+A bounded private Lambda trial passed 28 reviewed synthetic cases with the exact recorded patched image, saved diagnostics and verified cleanup of its owned resources. The cold first request took about 86 seconds. This is technical parity evidence, not clinical validation, comprehensive security assurance, p95/p99 performance or acceptance of public/persistent hosting.
 
-### 3. Install Frontend Dependencies
+[Runtime provenance](docs/RUNTIME_PROVENANCE.json) records exact artifact/environment identities. [Reproducibility](docs/REPRODUCIBILITY.md) distinguishes the accepted image, current research metadata and proposed future-build inputs. The Docker recipes retain unresolved base/OS locking requirements; they are not claimed to reproduce the accepted patched image.
 
-```bash
-cd frontend
-npm install
-cd ..
-```
+## Privacy, dependencies and licensing
 
-## Running the Project
+- [Privacy and limitations](docs/PRIVACY_AND_LIMITATIONS.md) describes application handling and its boundaries.
+- [Dependency review](docs/DEPENDENCIES.md), [metadata index](docs/DEPENDENCY_LICENSES.json) and [frontend notices](docs/THIRD_PARTY_NOTICES.md) retain upstream terms and point-in-time check scope.
+- Author-owned source and original accompanying repository documentation use the [ISC licence](LICENSE), preserving the original root package declaration. [Licensing scope](docs/LICENSING_STATUS.md) distinguishes the dissertation, third-party code/notices, datasets/models and branding, which retain their separate rights and terms.
 
-### Training the ML Pipeline
-
-```bash
-# Train all four models with class-weight balancing (recommended)
-python main.py --balancing_mode class_weight
-
-# Train with SMOTE
-python main.py --balancing_mode smote
-
-# Train with random undersampling
-python main.py --balancing_mode undersample
-
-# Use cached hyperparameters (skips 50-trial Optuna search)
-python main.py --balancing_mode class_weight --use_cached_params
-```
-
-Results are saved to `reports/run_YYYY-MM-DD_HH-MM-SS_<mode>/`.
-
-### Starting the Web Application
-
-Open two terminal windows:
-
-**Terminal 1: Backend**
-```bash
-python -m uvicorn api.main:app --reload
-```
-The API starts at http://localhost:8000.
-
-**Important: Automatic Run Selection**
-At startup, the backend scans the `reports/` directory, sorts all `run_YYYY-MM-DD_HH-MM-SS_*` folders in reverse chronological order, and loads model artefacts from the most recent run. This means the last pipeline execution determines which models, metrics, SHAP outputs, and fairness reports are served to the frontend. To switch which run is active, either re-run the pipeline or rename/remove newer run directories.
-
-**Terminal 2: Frontend**
-```bash
-cd frontend
-npm run dev
-```
-The frontend starts at http://localhost:5173.
-
-### Running Tests
-
-```bash
-# Run all 31 tests
-pytest tests/ -v
-
-# Run pipeline tests only
-pytest tests/test_pipeline.py -v
-
-# Run API tests only
-pytest tests/test_api.py -v
-```
-
-## Web Application
-
-The application provides two modes accessible via a toggle in the top navigation:
-
-**Model Comparison Mode**: Displays evaluation metrics (AUC, F1, precision, recall, accuracy) for all four classifiers as interactive cards. Each card expands to show two tabs: Evaluation Metrics and Global SHAP (beeswarm plot), with an interpretation info button providing a plain-language summary of each model's behaviour.
-
-**Exploratory Mode**: Provides three predefined risk profiles and a custom prediction form.
-
-- **Healthy**: Young adult (age 28), normal BMI (22.8), no risk factors, active lifestyle
-- **Elevated Risk**: Middle-aged (age 45), overweight BMI (27.8), family diabetes history, sedentary
-- **High Risk**: Older adult (age 62), obese BMI (36.3), hypertension, multiple concurrent risk factors
-
-Each preset displays per-model prediction probabilities with a toggle for SHAP feature explanation. The Custom Prediction Form accepts 16 health inputs grouped into Demographics, Body Measurements, Vitals, and Lifestyle/History. BMI and waist-to-height ratio are computed server-side from height, weight, and waist circumference. All inputs are processed transiently with no data stored or logged.
-
-**API Endpoints**:
-| Endpoint | Method | Description |
-|---|---|---|
-| `/health` | GET | Health check, reports loaded models |
-| `/api/models/metrics` | GET | Returns evaluation metrics for all models |
-| `/api/exploratory/presets` | GET | Returns three risk profile presets |
-| `/api/exploratory/predict/custom` | POST | Computes predictions for custom input |
-| `/api/exploratory/predict/preset/{name}` | POST | Computes predictions for a preset |
-| `/api/models/{name}/interpretation` | GET | Returns model interpretation text |
-| `/api/models/{name}/shap/global` | GET | Returns global SHAP beeswarm PNG |
-
-## Key Results
-
-| Model | Balancing | ROC-AUC | F1 | Sensitivity |
-|---|---|---|---|---|
-| XGBoost | class_weight | 0.847 | 0.564 | 0.676 |
-| LightGBM | class_weight | 0.845 | 0.560 | 0.667 |
-| Random Forest | class_weight | 0.840 | 0.555 | 0.674 |
-| Logistic Regression | class_weight | 0.835 | 0.537 | 0.715 |
-
-## Dataset
-
-NHANES (National Health and Nutrition Examination Survey) cycles 2013-2014, 2015-2016, and 2017-2018. The pipeline automatically downloads the required .xpt files from the CDC servers on first run.
-
-- Records: 15,757
-- Features: 16 non-invasive (8 numerical, 6 nominal, 2 ordinal)
-- Target: Composite label (HbA1c >= 6.5% OR insulin use OR diabetes medication)
-- Class distribution: 82.4% non-diabetic, 17.6% diabetic
-
-## Configuration
-
-All feature definitions, NHANES variable mappings, and file paths are centralised in `src/config.py`. To modify the feature set, update the `NUMERICAL_VARS`, `NOMINAL_VARS`, and `ORDINAL_VARS` lists and re-run the pipeline.
-
-The three balancing strategies are controlled via the `--balancing_mode` flag:
-- `class_weight`: Adjusts class weights inversely proportional to class frequency (recommended)
-- `smote`: Synthetic Minority Over-sampling on the training fold
-- `undersample`: Random undersampling of the majority class on the training fold
-
-## Disclaimer
-
-This is an educational tool developed as a BSc Computer Science final year project. It does not replace clinical testing, professional medical diagnosis, or healthcare consultation. Always consult a qualified healthcare provider for medical advice.
+The public dissertation copy remains deferred. The submitted PDF is preserved privately, and no derivative or publication is included here. The companion notes record known corrections without rewriting the submitted results or presenting later work as original coursework.

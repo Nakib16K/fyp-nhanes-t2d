@@ -17,7 +17,7 @@ export function DisclaimerBanner({ variant = "general" }: DisclaimerBannerProps)
         <p className="text-sm text-amber-800 mt-1">
           {isPrivacy
             ? "No data from this form is stored in the database. All predictions are processed temporarily and discarded immediately after generation."
-            : "This is an exploratory tool for educational purposes only and does not replace clinical testing, professional medical diagnosis, or healthcare consultation. Always consult with a qualified healthcare provider for medical advice."}
+            : "Educational research illustration using a survey-derived diabetes-status label, not a clinically validated Type 2 diabetes diagnosis or future-risk forecast. Predictions are not medical advice; consult a qualified healthcare professional."}
         </p>
       </div>
     </div>

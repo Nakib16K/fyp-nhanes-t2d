@@ -11,7 +11,7 @@ interface CustomPredictionFormProps {
   error?: Error | null;
 }
 
-const MODEL_OPTIONS = ["XGB", "LR", "RF", "LGBM"] as const;
+const MODEL_OPTIONS = ["XGB", "RF", "LGBM"] as const;
 
 // Local form state uses string for numeric inputs so fields can be blank
 // Only converted to numbers on submit
@@ -31,7 +31,6 @@ type FormState = {
   smoked_100_cigs: number;
   family_history_diabetes: number;
   vigorous_activity: number;
-  alcohol_frequency: string;
 };
 
 const EMPTY_FORM: FormState = {
@@ -50,7 +49,6 @@ const EMPTY_FORM: FormState = {
   smoked_100_cigs: 0,
   family_history_diabetes: 0,
   vigorous_activity: 0,
-  alcohol_frequency: "",
 };
 
 export function CustomPredictionForm({
@@ -73,25 +71,75 @@ export function CustomPredictionForm({
     const sbp = Number(formData.systolic_bp);
     const dbp = Number(formData.diastolic_bp);
     const pulse = Number(formData.pulse_60s);
-    const alc = Number(formData.alcohol_frequency);
 
-    if (!formData.gender_code || formData.gender_code === 0) errors.gender_code = "Please select a gender";
-    if (!formData.ethnicity_code || formData.ethnicity_code === 0) errors.ethnicity_code = "Please select an ethnicity";
-    if (!formData.education_level || formData.education_level === 0) errors.education_level = "Please select an education level";
-    if (!formData.history_high_bp || formData.history_high_bp === 0) errors.history_high_bp = "Please select an option";
+    if (
+      !formData.gender_code ||
+      formData.gender_code === 0
+    ) errors.gender_code = "Please select a gender";
+    if (![1, 2, 3, 4, 6, 7].includes(formData.ethnicity_code))
+      errors.ethnicity_code = "Select a supported ethnicity";
+    if (![1, 2, 3, 4, 5].includes(formData.education_level))
+      errors.education_level = "Select a supported education level (1–5)";
+    if (
+      !formData.history_high_bp ||
+      formData.history_high_bp === 0
+    ) errors.history_high_bp = "Please select an option";
     if (!formData.smoked_100_cigs || formData.smoked_100_cigs === 0) errors.smoked_100_cigs = "Please select an option";
-    if (!formData.family_history_diabetes || formData.family_history_diabetes === 0) errors.family_history_diabetes = "Please select an option";
-    if (!formData.vigorous_activity || formData.vigorous_activity === 0) errors.vigorous_activity = "Please select an option";
+    if (
+      !formData.family_history_diabetes ||
+      formData.family_history_diabetes === 0
+    ) errors.family_history_diabetes = "Please select an option";
+    if (
+      !formData.vigorous_activity ||
+      formData.vigorous_activity === 0
+    ) errors.vigorous_activity = "Please select an option";
 
-    if (formData.age_years === "" || isNaN(age) || age < 20 || age > 120) errors.age_years = "Must be 20–120";
-    if (formData.poverty_ratio === "" || isNaN(pr) || pr < 0 || pr > 5) errors.poverty_ratio = "Must be 0.0 – 5.0";
-    if (formData.height_cm === "" || isNaN(h) || h < 100 || h > 250) errors.height_cm = "Must be 100–250 cm";
-    if (formData.weight_kg === "" || isNaN(w) || w < 30 || w > 300) errors.weight_kg = "Must be 30–300 kg";
-    if (formData.waist_circumference === "" || isNaN(wc) || wc < 50 || wc > 200) errors.waist_circumference = "Must be 50–200 cm";
-    if (formData.systolic_bp === "" || isNaN(sbp) || sbp < 70 || sbp > 250) errors.systolic_bp = "Must be 70–250 mmHg";
-    if (formData.diastolic_bp === "" || isNaN(dbp) || dbp < 40 || dbp > 150) errors.diastolic_bp = "Must be 40–150 mmHg";
-    if (formData.pulse_60s === "" || isNaN(pulse) || pulse < 30 || pulse > 200) errors.pulse_60s = "Must be 30–200 bpm";
-    if (formData.alcohol_frequency === "" || isNaN(alc) || alc < 0 || alc > 365) errors.alcohol_frequency = "Must be 0–365 days/year (0 if non-drinker)";
+    if (
+      formData.age_years === "" ||
+      isNaN(age) ||
+      age < 20 ||
+      age > 120 ||
+      !Number.isInteger(age)
+    ) errors.age_years = "Must be a whole number (20–120)";
+    if (
+      formData.poverty_ratio === "" ||
+      isNaN(pr) ||
+      pr < 0 ||
+      pr > 5
+    ) errors.poverty_ratio = "Must be 0.0 – 5.0";
+    if (
+      formData.height_cm === "" ||
+      isNaN(h) ||
+      h < 100 ||
+      h > 250
+    ) errors.height_cm = "Must be 100–250 cm";
+    if (
+      formData.weight_kg === "" ||
+      isNaN(w) ||
+      w < 30 ||
+      w > 300
+    ) errors.weight_kg = "Must be 30–300 kg";
+    if (
+      formData.waist_circumference === "" ||
+      isNaN(wc) ||
+      wc < 50 ||
+      wc > 200
+    ) errors.waist_circumference = "Must be 50–200 cm";
+    if (
+      formData.systolic_bp === "" ||
+      isNaN(sbp) ||
+      sbp < 70 ||
+      sbp > 250 ||
+      !Number.isInteger(sbp)
+    ) errors.systolic_bp = "Must be a whole number (70–250 mmHg)";
+    if (
+      formData.diastolic_bp === "" ||
+      isNaN(dbp) ||
+      dbp < 40 ||
+      dbp > 150 ||
+      !Number.isInteger(dbp)
+    ) errors.diastolic_bp = "Must be a whole number (40–150 mmHg)";
+    if (formData.pulse_60s === "" || isNaN(pulse) || pulse < 30 || pulse > 200 || !Number.isInteger(pulse)) errors.pulse_60s = "Must be a whole number (30–200 bpm)";
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
@@ -117,7 +165,6 @@ export function CustomPredictionForm({
       smoked_100_cigs: formData.smoked_100_cigs,
       family_history_diabetes: formData.family_history_diabetes,
       vigorous_activity: formData.vigorous_activity,
-      alcohol_frequency: Number(formData.alcohol_frequency),
     };
     await onSubmit(payload, selectedModel);
   };
@@ -145,7 +192,7 @@ export function CustomPredictionForm({
         <div className="text-left">
           <h3 className="font-bold text-gray-900">Test Your Own Prediction</h3>
           <p className="text-sm text-gray-600 mt-1">
-            Enter your health metrics to get a personalised diabetes risk assessment
+            Explore research model estimates from an illustrative profile, not a diagnosis
           </p>
         </div>
         {expanded ? (
@@ -164,7 +211,7 @@ export function CustomPredictionForm({
               <h4 className="font-semibold text-gray-900 border-b pb-2">Model Selection</h4>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Choose Model for Prediction &amp; SHAP Explanation
+                  Choose model for local SHAP explanation
                 </label>
                 <select
                   value={selectedModel}
@@ -173,6 +220,10 @@ export function CustomPredictionForm({
                 >
                   {MODEL_OPTIONS.map((m) => <option key={m} value={m}>{m}</option>)}
                 </select>
+                <p className="text-xs text-gray-600 mt-2">
+                  All four models provide predictions. This menu selects only the
+                  model used for the feature explanation (LR has no local SHAP).
+                </p>
               </div>
             </div>
 
@@ -188,7 +239,8 @@ export function CustomPredictionForm({
                     onChange={(e) => handleNumericChange("age_years", e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600"
                   />
-                  {validationErrors.age_years && <p className="text-red-600 text-xs mt-1">{validationErrors.age_years}</p>}
+                  {validationErrors.age_years &&
+                    <p className="text-red-600 text-xs mt-1">{validationErrors.age_years}</p>}
                 </div>
 
                 <div>
@@ -201,7 +253,8 @@ export function CustomPredictionForm({
                     <option value={1}>Male</option>
                     <option value={2}>Female</option>
                   </select>
-                  {validationErrors.gender_code && <p className="text-red-600 text-xs mt-1">{validationErrors.gender_code}</p>}
+                  {validationErrors.gender_code &&
+                    <p className="text-red-600 text-xs mt-1">{validationErrors.gender_code}</p>}
                 </div>
 
                 <div>
@@ -216,8 +269,10 @@ export function CustomPredictionForm({
                     <option value={3}>Non-Hispanic White</option>
                     <option value={4}>Non-Hispanic Black</option>
                     <option value={6}>Non-Hispanic Asian</option>
+                    <option value={7}>Other / Multi-Racial</option>
                   </select>
-                  {validationErrors.ethnicity_code && <p className="text-red-600 text-xs mt-1">{validationErrors.ethnicity_code}</p>}
+                  {validationErrors.ethnicity_code &&
+                    <p className="text-red-600 text-xs mt-1">{validationErrors.ethnicity_code}</p>}
                 </div>
 
                 <div className="md:col-span-2 lg:col-span-1">
@@ -231,7 +286,8 @@ export function CustomPredictionForm({
                       <option key={code} value={parseInt(code)}>{label}</option>
                     ))}
                   </select>
-                  {validationErrors.education_level && <p className="text-red-600 text-xs mt-1">{validationErrors.education_level}</p>}
+                  {validationErrors.education_level &&
+                    <p className="text-red-600 text-xs mt-1">{validationErrors.education_level}</p>}
                 </div>
 
                 <div>
@@ -251,7 +307,8 @@ export function CustomPredictionForm({
                     onChange={(e) => handleNumericChange("poverty_ratio", e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600"
                   />
-                  {validationErrors.poverty_ratio && <p className="text-red-600 text-xs mt-1">{validationErrors.poverty_ratio}</p>}
+                  {validationErrors.poverty_ratio &&
+                    <p className="text-red-600 text-xs mt-1">{validationErrors.poverty_ratio}</p>}
                 </div>
               </div>
             </div>
@@ -270,7 +327,8 @@ export function CustomPredictionForm({
                     onChange={(e) => handleNumericChange("height_cm", e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600"
                   />
-                  {validationErrors.height_cm && <p className="text-red-600 text-xs mt-1">{validationErrors.height_cm}</p>}
+                  {validationErrors.height_cm &&
+                    <p className="text-red-600 text-xs mt-1">{validationErrors.height_cm}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Weight (kg)</label>
@@ -279,7 +337,8 @@ export function CustomPredictionForm({
                     onChange={(e) => handleNumericChange("weight_kg", e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600"
                   />
-                  {validationErrors.weight_kg && <p className="text-red-600 text-xs mt-1">{validationErrors.weight_kg}</p>}
+                  {validationErrors.weight_kg &&
+                    <p className="text-red-600 text-xs mt-1">{validationErrors.weight_kg}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Waist Circumference (cm)</label>
@@ -288,9 +347,16 @@ export function CustomPredictionForm({
                     onChange={(e) => handleNumericChange("waist_circumference", e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600"
                   />
-                  {validationErrors.waist_circumference && <p className="text-red-600 text-xs mt-1">{validationErrors.waist_circumference}</p>}
+                  {validationErrors.waist_circumference &&
+                    <p className="text-red-600 text-xs mt-1">{validationErrors.waist_circumference}</p>}
                 </div>
               </div>
+              {formData.height_cm !== "" && (Number(formData.height_cm) > 210 || Number(formData.height_cm) < 130) && (
+                <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-md p-3" role="status">
+                  Unusual height entered. Please double-check the measurement and units.
+                  Research model estimates may be less reliable for uncommon profiles.
+                </p>
+              )}
             </div>
 
             {/* Vitals */}
@@ -304,7 +370,8 @@ export function CustomPredictionForm({
                     onChange={(e) => handleNumericChange("systolic_bp", e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600"
                   />
-                  {validationErrors.systolic_bp && <p className="text-red-600 text-xs mt-1">{validationErrors.systolic_bp}</p>}
+                  {validationErrors.systolic_bp &&
+                    <p className="text-red-600 text-xs mt-1">{validationErrors.systolic_bp}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Diastolic BP (mmHg)</label>
@@ -313,7 +380,8 @@ export function CustomPredictionForm({
                     onChange={(e) => handleNumericChange("diastolic_bp", e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600"
                   />
-                  {validationErrors.diastolic_bp && <p className="text-red-600 text-xs mt-1">{validationErrors.diastolic_bp}</p>}
+                  {validationErrors.diastolic_bp &&
+                    <p className="text-red-600 text-xs mt-1">{validationErrors.diastolic_bp}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Resting Pulse (bpm)</label>
@@ -341,7 +409,8 @@ export function CustomPredictionForm({
                     <option value={1}>Yes</option>
                     <option value={2}>No</option>
                   </select>
-                  {validationErrors.history_high_bp && <p className="text-red-600 text-xs mt-1">{validationErrors.history_high_bp}</p>}
+                  {validationErrors.history_high_bp &&
+                    <p className="text-red-600 text-xs mt-1">{validationErrors.history_high_bp}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Family Diabetes History?</label>
@@ -353,7 +422,8 @@ export function CustomPredictionForm({
                     <option value={1}>Yes</option>
                     <option value={2}>No</option>
                   </select>
-                  {validationErrors.family_history_diabetes && <p className="text-red-600 text-xs mt-1">{validationErrors.family_history_diabetes}</p>}
+                  {validationErrors.family_history_diabetes &&
+                    <p className="text-red-600 text-xs mt-1">{validationErrors.family_history_diabetes}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Smoked 100+ Cigarettes?</label>
@@ -377,16 +447,8 @@ export function CustomPredictionForm({
                     <option value={1}>Yes</option>
                     <option value={2}>No</option>
                   </select>
-                  {validationErrors.vigorous_activity && <p className="text-red-600 text-xs mt-1">{validationErrors.vigorous_activity}</p>}
-                </div>
-                <div className="md:col-span-2 lg:col-span-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Alcohol Frequency (Days/Year)</label>
-                  <input type="number" placeholder="e.g. 52 (0 if non-drinker)"
-                    value={formData.alcohol_frequency}
-                    onChange={(e) => handleNumericChange("alcohol_frequency", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600"
-                  />
-                  {validationErrors.alcohol_frequency && <p className="text-red-600 text-xs mt-1">{validationErrors.alcohol_frequency}</p>}
+                  {validationErrors.vigorous_activity &&
+                    <p className="text-red-600 text-xs mt-1">{validationErrors.vigorous_activity}</p>}
                 </div>
               </div>
             </div>

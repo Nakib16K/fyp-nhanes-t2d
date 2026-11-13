@@ -110,8 +110,9 @@ NOMINAL_VARS = [
 ]
 
 ORDINAL_VARS = [
-    'education_level', 
-    'alcohol_frequency'
+    'education_level',
+    # ALQ120Q is not harmonised across NHANES cycles and was unused
+    # in all 40 previously fitted preprocessors. It is NOT a predictor.
 ]
 
 NUMERICAL_VARS = [

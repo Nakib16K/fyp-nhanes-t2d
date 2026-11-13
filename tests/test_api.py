@@ -40,7 +40,6 @@ VALID_PAYLOAD = {
     "diastolic_bp": 82,
     "pulse_60s": 72,
     "smoked_100_cigs": 1,
-    "alcohol_frequency": 100,
     "vigorous_activity": 2,
     "family_history_diabetes": 1,
     "history_high_bp": 1,
@@ -79,6 +78,11 @@ def client():
          "Precision": 0.430, "Recall_Sensitivity": 0.715, "Accuracy": 0.783},
     ]
     main_module.ml_registry["latest_run_dir"] = None
+    # API test doubles explicitly declare their thresholds. Production loads
+    # these from a verified run manifest; no implicit default is allowed.
+    main_module.ml_registry["thresholds"] = {
+        "XGB": 0.31, "LGBM": 0.32, "RF": 0.33, "LR": 0.34,
+    }
 
     with TestClient(main_module.app, raise_server_exceptions=True) as c:
         yield c

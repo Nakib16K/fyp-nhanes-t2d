@@ -1,0 +1,15 @@
+# Application privacy and limitations
+
+The intended development/demo workflow uses synthetic examples. Submitted form values are sent to the configured backend, which validates them and returns model estimates and explanations. `VITE_API_URL` is public frontend configuration and must contain no credential.
+
+The application is designed to avoid payload persistence and payload logging, applies response no-store controls and clears its in-memory model registry on normal shutdown. These controls do not certify erasure from browser memory, operating-system buffers, proxies, provider metadata or all infrastructure logs. Clearing models/garbage collection is not proof of zero trace. Hosting-specific log/access/retention arrangements require their own review; no blanket GDPR compliance or anonymous-health-data guarantee is claimed.
+
+Local source startup defaults to loopback access and exact local CORS origins. The production configuration requires explicit hosts/origins and restricts documentation exposure. The body limit, input schema and host/CORS checks are application controls; they do not by themselves provide authentication, upstream rate limiting or a clinical safety system.
+
+The source release excludes private data/model files, prediction vectors, credentials and raw cloud/session evidence. `.gitignore` reduces accidental inclusion, while a final reviewed file allowlist and content scan remain necessary. Ignore rules do not remove already tracked files or erase existing repository history.
+
+The model target is a cross-sectional HbA1c/medication-derived survey proxy. Outputs are educational estimates, not diagnoses, future-incidence predictions or validated clinical risk scores. Thresholds are validation-selected model operating points; displayed percentages are rounded. SHAP values explain an uncalibrated constituent estimator, not final calibrated probability points or causal effects.
+
+Historical results, the corrected experiment and later private infrastructure tests are distinct. Survey weights were not used for national inference; subgroup sample sizes/uncertainty and reused-holdout limits remain relevant. The 28-case private trial established sampled technical parity/cleanup and retained an approximately 86-second first request. It does not establish clinical generalisation, fair outcomes, complete security or public interactive performance.
+
+See [methodology notes](DISSERTATION_NOTES.md) and [reproducibility](REPRODUCIBILITY.md). The public dissertation copy remains deferred; no public service or persistent deployment is supplied by this source candidate.

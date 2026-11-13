@@ -152,7 +152,7 @@ export function ModelCard({ model }: ModelCardProps) {
             {activeTab === "shap" && (
               <div className="space-y-4">
                 <p className="text-sm text-gray-600 mb-4">
-                  Global SHAP summary showing average feature importance and directionality across the entire holdout dataset:
+                  Global SHAP summary for the underlying uncalibrated estimator, computed on the holdout dataset. It does not directly explain the full calibrated ensemble probabilities or the final High/Low labels:
                 </p>
                 {modelNameSafe ? (
                   <div className="bg-white rounded-lg p-4 border border-gray-200 flex justify-center">
