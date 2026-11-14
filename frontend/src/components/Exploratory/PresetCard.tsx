@@ -100,7 +100,7 @@ export function PresetCard({
       {/* Header */}
       <div className="p-6 bg-gradient-to-r from-gray-50 to-white flex items-start justify-between">
         <div>
-          <h3 className="text-lg font-bold text-gray-900">{label.name}</h3>
+          <h3 className="text-lg font-bold text-gray-900 lg:min-h-[56px] xl:min-h-[28px]">{label.name}</h3>
           <p className="text-sm text-gray-600 mt-1 min-h-[40px]">{label.description}</p>
         </div>
         {/* Info button — shows current variables */}

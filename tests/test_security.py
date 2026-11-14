@@ -31,6 +31,27 @@ def test_refuse_unknown_host(client):
     assert r.status_code==400
 
 
+def test_local_preflight_accepts_signed_json_headers(client):
+    r=client.options('/api/exploratory/predict/custom',headers={
+        'origin':'http://localhost:5173',
+        'access-control-request-method':'POST',
+        'access-control-request-headers':'content-type,x-amz-content-sha256',
+    })
+    assert r.status_code==200
+    assert r.headers['access-control-allow-origin']=='http://localhost:5173'
+    assert 'x-amz-content-sha256' in r.headers['access-control-allow-headers'].lower()
+
+
+def test_signed_header_does_not_relax_origin_allowlist(client):
+    r=client.options('/api/exploratory/predict/custom',headers={
+        'origin':'https://untrusted.example',
+        'access-control-request-method':'POST',
+        'access-control-request-headers':'content-type,x-amz-content-sha256',
+    })
+    assert r.status_code==400
+    assert 'access-control-allow-origin' not in r.headers
+
+
 def test_prediction_json_required(client):
     r=client.post('/api/exploratory/predict/custom',data='x',headers={'content-type':'text/plain'})
     assert r.status_code==415

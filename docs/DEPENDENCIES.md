@@ -1,6 +1,6 @@
 # Dependency and notice review
 
-Checkpoint: 13 November 2026. See [DEPENDENCY_LICENSES.json](DEPENDENCY_LICENSES.json) for exact metadata and existing notice-file hashes.
+Dependency/notice review checkpoint: 13 November 2026. Hosted-runtime delta documented on 14 November 2026. See [DEPENDENCY_LICENSES.json](DEPENDENCY_LICENSES.json) for exact metadata and existing notice-file hashes.
 
 ## Frontend
 
@@ -12,11 +12,11 @@ The point-in-time registry audit returned zero known findings across the full lo
 
 ## Python/native runtime
 
-All 49 installed Python distribution versions and 90 RPM names/versions matched the saved accepted-image inventory during read-only inspection. Installed licence/notice-file metadata was collected without executing application code or loading models. Official PyPI metadata was also inspected; LightGBM's installed metadata and [versioned upstream licence](https://github.com/lightgbm-org/LightGBM/blob/v4.7.0/LICENSE) resolve the registry-field omission.
+All 49 installed Python distribution versions and 90 RPM names/versions matched the saved historical private-image inventory during read-only inspection. Installed licence/notice-file metadata was collected without executing application code or loading models. Official PyPI metadata was also inspected; LightGBM's installed metadata and [versioned upstream licence](https://github.com/lightgbm-org/LightGBM/blob/v4.7.0/LICENSE) resolve the registry-field omission.
 
 The runtime includes multiple upstream terms and native/vendored components. Python/native binaries and container images are not distributed in this source candidate. Redistributing such artifacts needs a separate complete licence/NOTICE/source-obligation review; the metadata table is not blanket legal clearance. The source author's licence cannot relicense dependencies.
 
-Forty-eight compatible backend wheels were downloaded and hash/metadata checked for proposed future-build inputs, with no active dependency-constraint errors. They were not installed. The set excludes the accepted runtime's older pip tool, whose restricted-trial advisory review is not a general build/public-hosting waiver. A future build still needs reviewed base/OS/installer inputs and actual scan/parity checks; the accepted image remains unchanged.
+Forty-eight compatible backend wheels were downloaded and hash/metadata checked for proposed future-build inputs, with no active dependency-constraint errors. They were not installed. The set excludes the historical private runtime's older pip tool, whose restricted-trial advisory review is not a general build/public-hosting waiver. The later hosted integration image actually removed pip from its effective runtime while retaining all 48 other distribution versions; its inherited layers still contain historical installer bytes. A subsequent native repair updated only rpm, rpm-libs and sqlite-libs, retaining 90 RPM names. The exact hosted image passed a fresh ECR BASIC scan with no findings on 14 November; this remains a point-in-time OS check. The original private image is preserved. See [hosted provenance](HOSTED_RELEASE_PROVENANCE.json) for the lineage and remaining future-build requirements.
 
 ## Research requirements
 

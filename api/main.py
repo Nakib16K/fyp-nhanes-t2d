@@ -128,7 +128,7 @@ app.add_middleware(
     allow_origins=allowed_origins(os.getenv("FYP_CORS_ORIGINS")),
     allow_credentials=False,
     allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "x-amz-content-sha256"],
 )
 
 @app.middleware("http")

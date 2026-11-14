@@ -14,7 +14,7 @@ The April dissertation and the later corrected experiment are separate historica
 - Local tests, reference container recipes and documented runtime provenance.
 - The original EDA notebook code, with saved outputs/execution metadata removed and a historical-scope notice. It has not been rerun against a new dataset.
 
-Private models, raw/processed respondent data, prediction vectors, credentials and raw cloud evidence are not distributed here. Inference requires a separately supplied trusted, complete verified run. The source tree by itself does not include a running backend or trained model files.
+Private models, raw/processed respondent data, prediction vectors, credentials and raw cloud evidence are not distributed here. Inference requires a separately supplied trusted, complete verified run. The source tree by itself does not include a running backend or trained model files. A separately operated, access-protected educational preview passed hosted acceptance on 14 November 2026; see [hosted demo scope and limits](docs/HOSTED_DEMO.md). It is scheduled to stop on 20 November 2026 at 18:37 UTC or earlier, rather than remain continuously available.
 
 ## Frontend checks and local preview
 
@@ -31,7 +31,7 @@ npm run dev -- --host 127.0.0.1 --port 5173 --strictPort
 
 The fresh install/type/lint/build checks passed, and the generated files matched the earlier tested build byte for byte. The point-in-time npm audit returned no known findings. Lifecycle scripts were disabled during installation; the existing build works with that setting on the tested platform. Other operating systems need their own verification.
 
-The frontend uses `http://localhost:8000` by default. `VITE_API_URL` can select an explicitly configured backend; it is public build configuration, so it must contain no secret. Prediction features require the separate backend and trusted artifacts described below. Use synthetic examples for development.
+The frontend uses `http://localhost:8000` by default. `VITE_API_URL` can select an explicitly configured backend; it is public build configuration, so it must contain no secret. The accepted hosted build uses the authenticated CloudFront HTTPS domain for both the page and API. The browser hashes the exact UTF-8 POST/PUT body for origin signing; it holds no AWS signing credentials. Prediction features require the separate backend and trusted artifacts described below. Use synthetic examples for development.
 
 The root package also provides explicit `setup:frontend`, `typecheck`, `lint`, `build`, `dev` and `preview` wrappers. Its automatic install lifecycle was removed, so installing the root wrapper does not silently install frontend dependencies. Use the explicit setup command when intended. The historical root ISC metadata is retained; see the licensing note below.
 
@@ -53,7 +53,9 @@ The reviewed offline source suite passed 199 tests, with one Windows symlink-per
 
 A bounded private Lambda trial passed 28 reviewed synthetic cases with the exact recorded patched image, saved diagnostics and verified cleanup of its owned resources. The cold first request took about 86 seconds. This is technical parity evidence, not clinical validation, comprehensive security assurance, p95/p99 performance or acceptance of public/persistent hosting.
 
-[Runtime provenance](docs/RUNTIME_PROVENANCE.json) records exact artifact/environment identities. [Reproducibility](docs/REPRODUCIBILITY.md) distinguishes the accepted image, current research metadata and proposed future-build inputs. The Docker recipes retain unresolved base/OS locking requirements; they are not claimed to reproduce the accepted patched image.
+The later protected hosted preview passed 28 synthetic reference cases through authenticated CloudFront HTTPS plus 11 browser application requests. Its first unprewarmed request took about 91 seconds, with an initial provider initialization timeout retained in the logs; no operator/client retry was sent. A fresh exact-image ECR BASIC scan reported no findings. These are point-in-time functional checks, not clinical validation, exhaustive security assurance or a low-latency service guarantee.
+
+[Historical private runtime provenance](docs/RUNTIME_PROVENANCE.json) preserves the 12 November image/environment record. [Hosted release provenance](docs/HOSTED_RELEASE_PROVENANCE.json) records the later image lineage, preserved runtime/frozen inputs and hosted acceptance. [Reproducibility](docs/REPRODUCIBILITY.md) distinguishes the accepted image, current research metadata and proposed future-build inputs. The Docker recipes retain unresolved base/OS locking requirements; they are not claimed to reproduce the accepted patched image.
 
 ## Privacy, dependencies and licensing
 
