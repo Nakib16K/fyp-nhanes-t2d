@@ -15,27 +15,27 @@ const METRIC_EXPLANATIONS: Record<string, { title: string; plain: string }> = {
   "AUC-ROC": {
     title: "AUC-ROC — Ranking Ability",
     plain:
-      "Measures the model's ability to distinguish diabetic from non-diabetic individuals across all possible decision thresholds. A score of 1.0 is perfect; 0.5 is no better than random chance. Higher is better.",
+      "Measures how well scores rank proxy-positive test records above proxy-negative records. A score of 1.0 is perfect ranking; 0.5 is random ranking. This evaluates the survey-defined label, not a confirmed clinical diagnosis.",
   },
   "F1 Score": {
     title: "F1 Score — Balance",
     plain:
-      "The harmonic mean of Precision and Recall. Useful when class imbalance is present, as it penalises models that simply predict the majority class. Balances the cost of false positives and false negatives.",
+      "The harmonic mean of precision and recall for the positive survey label. Read it alongside both component metrics; it does not encode clinical error costs.",
   },
   Precision: {
-    title: "Precision — Trustworthiness of Positive Predictions",
+    title: "Precision — Positive-Label Agreement",
     plain:
-      "Of all individuals the model predicted as diabetic, Precision is the proportion who actually were diabetic. Low precision means healthy people are unnecessarily flagged.",
+      "Among records predicted positive, the proportion with a positive survey-defined label. This describes agreement in the evaluated sample, not diagnostic certainty for an individual.",
   },
   Recall: {
-    title: "Recall (Sensitivity) — Case Detection Rate",
+    title: "Recall (Sensitivity) — Positive-Label Coverage",
     plain:
-      "Of all actual diabetic individuals in the test set, Recall is the proportion the model correctly identified. Low recall means diabetic cases are missed. This is the primary screening metric.",
+      "Among proxy-positive test records, the proportion predicted positive. It reports test-set sensitivity for the survey-defined label and does not establish clinical screening performance.",
   },
   Accuracy: {
     title: "Accuracy — Overall Correctness",
     plain:
-      "The proportion of all predictions that were correct. Note: accuracy can be misleading with imbalanced data — a model predicting 'not diabetic' for everyone would achieve 82% accuracy here but detect zero cases.",
+      "The proportion of test predictions matching their survey-defined labels. Accuracy can be high when the common class dominates, so interpret it with per-class metrics.",
   },
 };
 
@@ -121,6 +121,11 @@ export function ModelCard({ model }: ModelCardProps) {
                     <p className="text-sm font-semibold text-blue-900">
                       {model.model_name} — Metric Interpretations
                     </p>
+                    <p className="text-xs text-blue-800">
+                      These metrics describe a survey-defined diabetes-status proxy in the evaluated sample.
+                      Positive and negative labels are not independently confirmed clinical diagnoses.
+                      Historical report wording is preserved; F1 does not specify clinical error costs.
+                    </p>
                     {interpretationData && interpretationData !== "__builtin__" ? (
                       // Show parsed interpretation file
                       <pre className="text-xs text-blue-800 whitespace-pre-wrap font-sans leading-relaxed">
@@ -152,7 +157,7 @@ export function ModelCard({ model }: ModelCardProps) {
             {activeTab === "shap" && (
               <div className="space-y-4">
                 <p className="text-sm text-gray-600 mb-4">
-                  Global SHAP summary showing average feature importance and directionality across the entire holdout dataset:
+                  Global SHAP summary for the underlying uncalibrated estimator, computed on the holdout dataset. It does not directly explain the full calibrated ensemble probabilities or the final High/Low labels:
                 </p>
                 {modelNameSafe ? (
                   <div className="bg-white rounded-lg p-4 border border-gray-200 flex justify-center">

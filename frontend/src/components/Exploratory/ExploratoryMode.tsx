@@ -8,6 +8,7 @@ import { PresetCard } from "./PresetCard";
 import { CustomPredictionForm } from "./CustomPredictionForm";
 import { DisclaimerBanner } from "../DisclaimerBanner";
 import { SHAPVisualization } from "./SHAPVisualization";
+import { ModelDecisionExplanation } from "./ModelDecisionExplanation";
 
 export function ExploratoryMode() {
   const {
@@ -29,6 +30,7 @@ export function ExploratoryMode() {
   const [shapLoading, setShapLoading] = useState(false);
 
   const handleCustomPrediction = async (input: CustomPredictionInput, modelName: string) => {
+    setCustomPrediction(null);
     setCustomPredictionLoading(true);
     setCustomPredictionError(null);
     setShapExplanation(null);
@@ -71,7 +73,7 @@ export function ExploratoryMode() {
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Exploratory Mode</h1>
         <p className="text-gray-600 mt-2">
-          Explore diabetes risk predictions with preset scenarios or your own health metrics
+          Compare research model estimates using illustrative inputs; not a medical risk assessment
         </p>
       </div>
 
@@ -82,7 +84,7 @@ export function ExploratoryMode() {
         {predictionsError && <ErrorMessage message={`Prediction failed: ${predictionsError.message}`} />}
 
         {presets && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {Object.entries(presets).map(([key, preset]) => (
               <PresetCard
                 key={key}
@@ -131,23 +133,17 @@ export function ExploratoryMode() {
                 <h4 className="font-semibold text-blue-900 mb-3">Model Predictions</h4>
                 <div className="space-y-3">
                   {Object.entries(customPrediction.predictions).map(([modelName, pred]) => (
-                    <div key={modelName} className="bg-white rounded-lg p-4 border border-blue-200">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-bold text-gray-900">{modelName}</p>
-                          <p className="text-sm text-gray-600">{pred.prediction_class}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-2xl font-bold text-blue-900">{pred.risk_percentage}</p>
-                          <p className="text-xs text-gray-600">Probability: {pred.probability_score}</p>
-                        </div>
-                      </div>
-                    </div>
+                    <ModelDecisionExplanation key={modelName} modelName={modelName} prediction={pred} />
                   ))}
                 </div>
               </div>
 
               <div className="mt-4 pt-4 border-t border-blue-300 space-y-2">
+                <p className="text-sm text-blue-800">
+                  Each flag compares the model's full-precision estimate with its own
+                  validation-selected F1 cutoff. A cutoff is not a clinically validated
+                  high-risk boundary. Displayed percentages are rounded and are not diagnoses.
+                </p>
                 <p className="text-sm text-blue-800">
                   These predictions are from multiple machine learning models trained on diabetes risk factors.
                 </p>

@@ -1,0 +1,169 @@
+{
+  "kind": "OBSERVED_PROTECTED_HOSTED_RELEASE",
+  "evidence_date": "2026-11-14",
+  "historical_private_runtime_record": "RUNTIME_PROVENANCE.json",
+  "platform": "linux/amd64",
+  "manifest_digest": "sha256:c6d6a44a4ab2ad9c1dfbf74ba599bcfe121d9bc3ab3e3e96878d8388a492e9b4",
+  "config_digest": "sha256:ea37ea4b6333e86b92685dd447abcd5c8f46a6a1b5011c913b564cb2f43a24fb",
+  "local_image_bytes_not_transfer_or_cost": 1862781395,
+  "image_lineage": [
+    {
+      "manifest_digest": "sha256:9bb6e04b51eb34de32b42381bbb06fbae3147ac0b748c8953a0e7e8bc3a1ad2d",
+      "role": "Historical private trial;28 cases and cleanup;ten-package OS patch recorded separately"
+    },
+    {
+      "manifest_digest": "sha256:516083dcc770342fd352eb4ca66162e9c7526e22c3ab564e1515dffd0cfb21a9",
+      "role": "Reviewed runtime-source overlay,obsolete helper removal,effective pip uninstall;48 other Python versions and90 RPM versions unchanged;28 local handler cases"
+    },
+    {
+      "manifest_digest": "sha256:c6d6a44a4ab2ad9c1dfbf74ba599bcfe121d9bc3ab3e3e96878d8388a492e9b4",
+      "role": "Separate three-RPM vendor repair;37 packaged task files,19 frozen files and48 Python distributions preserved;28 local handler cases then hosted acceptance"
+    }
+  ],
+  "native_vendor_release_for_final_repair": "2023.12.20261112",
+  "native_package_delta_from_private_and_integration_parent": {
+    "rpm-libs": {
+      "before": "rpm-libs|4.16.1.3-29.amzn2023.0.9|x86_64",
+      "after": "rpm-libs|4.16.1.3-29.amzn2023.0.10|x86_64"
+    },
+    "rpm": {
+      "before": "rpm|4.16.1.3-29.amzn2023.0.9|x86_64",
+      "after": "rpm|4.16.1.3-29.amzn2023.0.10|x86_64"
+    },
+    "sqlite-libs": {
+      "before": "sqlite-libs|3.40.0-1.amzn2023.0.8|x86_64",
+      "after": "sqlite-libs|3.40.0-1.amzn2023.0.9|x86_64"
+    }
+  },
+  "python_version": "3.12.16 (main, Nov  5 2026, 08:07:43) [GCC 11.5.0 20240719 (Red Hat 11.5.0-5)]",
+  "python_binary_sha256": {
+    "/var/lang/bin/python": "7603e1dd5217a00188da03cf0d8221dca792150a7d87e3a9f6c5716247896a8d",
+    "/var/lang/lib/libpython3.12.so.1.0": "30f92207119cc4ae0db03a25c8f3f3970a1f2ff5f191696b533b127bc0b9d831"
+  },
+  "python_distributions_unchanged_from_historical_except_removed_pip": 48,
+  "pip_importable_in_effective_runtime": false,
+  "historical_installer_bytes_in_inherited_layers": true,
+  "rpm_names_retained": 90,
+  "packaged_task_files": 37,
+  "frozen_files": 19,
+  "frozen_run": "run_f1f2_2026-11-09_16-22-47_574130",
+  "frozen_manifest_sha256": "f5bb0b3cbcec5266b2894e52cfce0b7b2434e3dee687e6d730e6301a28b56475",
+  "accepted_source_selection_files": 96,
+  "accepted_source_selection_manifest_sha256": "5fe83c633fa1a107ed7f351cb3fa704ee2ab64e07a21397b592279b4af181ce4",
+  "runtime_source_sha256": {
+    "api/main.py": "faf595fe618abad0f0b22fe2ee53739b241dece37295b6ebef3c80bb94cb182a",
+    "deploy/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "deploy/lambda_handler.py": "4b5aa118528e25bfc3048543fb3a3b97c1e898536050252c6ee97b5dd1444e30",
+    "src/artifacts.py": "8274ab7135fa690cbd5d9e0743a93b1eab772187dcc7cead0a42e548a734a359",
+    "src/config.py": "3fc85430a0221fc0a16f3df88cf45b1823bc64b98d58c01d377e9a78aacf8646",
+    "src/data_dictionary.py": "b89ac9d4ac1991cbacb73cdc1cc37189610e0a2fdd13a25a96ee2beb1649f97a",
+    "src/data_loader.py": "070ebe68df3626ba3c3b0dc00ca6bb028ea87cd780f3608a65b0a4f6ca2d2292",
+    "src/decisions.py": "dd249369619b58bd94a6112983115106f2aa745d6fae0ebf63dae27b62071086",
+    "src/features.py": "151d61c9600de14d0603833ba0f312ee5f9ea4b266218e09a714b5df680ded13",
+    "src/models.py": "f6e786e062e27e417d9aae8fe594ee433d784dd74e1d6c336d4086896cc0bc58",
+    "src/pipeline.py": "3747c0ef4306b2b4dd7e4423054ebe49c01d17fba30807bfb42bd2853554632d",
+    "src/privacy.py": "7efd1e8cd9479ef73f2be82179ca8de96ba0ca03a06e0071bfc603af238383db",
+    "src/security.py": "8a347ba919b8f6db5ddaa991370a0a6e9f7b0771b7ae7d7c9493d7103cdb2db0",
+    "src/shap_helpers.py": "5e9b8609ca6cb31688bb105b4d5c06f02682f973358ce1a012ea83d04c8e0bb4",
+    "src/validation_protocol.py": "699a1b6f596fb253a9821c04f88f76e20732c16bd7bca8fe715ae2b1977a0554",
+    "deploy/requirements-inference.txt": "c825f455b623867d1ac1f3dd1c86ae8313bc9f6fb14df6cb6829a5a09006f4f1",
+    "deploy/requirements-lambda.txt": "8861bd06dc33668b2fbf34a2b5f88d12b067a461e5157f1f614c08fcb2be5156",
+    "deploy/requirements-runtime-linux.lock": "ce3dde0590f22c3224710f20292730c39f5e20386c9b3b7a2a434d740b8dc1de"
+  },
+  "public_reconciliation": "Later source cleanup changes comments/docstrings,formatting,test helpers and frontend explanatory text. The accepted image/frontend remain unchanged. Operational Python AST comparison excludes docstrings;this does not imply identical source bytes.",
+  "fresh_scan": {
+    "type": "ECR BASIC",
+    "completed_at_utc": "2026-11-14T11:56:33+00:00",
+    "findings": 0,
+    "scope": "Point-in-time OS findings,not exhaustive vulnerability assurance"
+  },
+  "acceptance": {
+    "reference_transport": "Authenticated CloudFront HTTPS",
+    "reference_cases_passed": 28,
+    "browser_application_requests_passed": 11,
+    "total_controlled_application_attempts": 39,
+    "concurrency": 1,
+    "operator_or_http_retry": false,
+    "first_unprewarmed_health_wall_ms": 91018.681,
+    "initial_provider_init_timeout_ms": 10000.12,
+    "first_reported_handler_duration_ms": 79929.14,
+    "cold_start_latency_resolved": false,
+    "warnings_retained": [
+      "joblib serial fallback",
+      "LightGBM TreeExplainer output-shape warning"
+    ],
+    "clinical_or_percentile_performance_validation": false
+  },
+  "controls": {
+    "viewer_and_direct_origin_probes_passed": 10,
+    "periodic_guard_delivery_observed": true,
+    "scheduled_concurrency_1_to_0_rehearsal_observed": true,
+    "cutoff_restored_after_rehearsal": true,
+    "function_timeout_seconds": 120,
+    "memory_mib": 2048
+  },
+  "operational_stop_utc": "2026-11-20T18:37:00+00:00",
+  "original_maximum_cutoff_utc": "2026-11-20T19:07:33+00:00",
+  "paid_upgrade_allowed": false,
+  "actual_credit_consumption_measured": false,
+  "final_owned_cleanup": "Pending while bounded preview intentionally running;later actual absence verification and owner finalizer required",
+  "reference_recipes_recreate_this_exact_image": false,
+  "raw_account_credentials_and_provider_evidence_distributed": false,
+  "public_frontend_line_ending_normalization": [
+    "frontend/index.html",
+    "frontend/src/App.tsx"
+  ],
+  "public_source_cleanup": {
+    "runtime_source_hash_differences": [
+      {
+        "path": "api/main.py",
+        "accepted_image_source_sha256": "faf595fe618abad0f0b22fe2ee53739b241dece37295b6ebef3c80bb94cb182a",
+        "clean_source_sha256": "4bbd0dabc7c5abe504832bc59d8959c6ba0f0cd411ae856b79d2f6deca91c1d1",
+        "operational_ast_equal_excluding_docstrings": true
+      },
+      {
+        "path": "deploy/lambda_handler.py",
+        "accepted_image_source_sha256": "4b5aa118528e25bfc3048543fb3a3b97c1e898536050252c6ee97b5dd1444e30",
+        "clean_source_sha256": "adfff36896139af0885ebc877830a1e79ab49b985075877064b113ab6ceeee9e",
+        "operational_ast_equal_excluding_docstrings": true
+      },
+      {
+        "path": "src/config.py",
+        "accepted_image_source_sha256": "3fc85430a0221fc0a16f3df88cf45b1823bc64b98d58c01d377e9a78aacf8646",
+        "clean_source_sha256": "8b583f0594b36c0ea070bed39b02e37f0d0843932bf9cdd511779efeb1fa15e8",
+        "operational_ast_equal_excluding_docstrings": true
+      },
+      {
+        "path": "src/privacy.py",
+        "accepted_image_source_sha256": "7efd1e8cd9479ef73f2be82179ca8de96ba0ca03a06e0071bfc603af238383db",
+        "clean_source_sha256": "6fc00b9bb35a9c6fa65029d6997f900c3700046d464fe85a09c07907bc1e8d56",
+        "operational_ast_equal_excluding_docstrings": true
+      },
+      {
+        "path": "src/security.py",
+        "accepted_image_source_sha256": "8a347ba919b8f6db5ddaa991370a0a6e9f7b0771b7ae7d7c9493d7103cdb2db0",
+        "clean_source_sha256": "88f9f56b258dc39cb92dd492b09903e86b97f2116cc736c038751253164e4694",
+        "operational_ast_equal_excluding_docstrings": true
+      },
+      {
+        "path": "src/shap_helpers.py",
+        "accepted_image_source_sha256": "5e9b8609ca6cb31688bb105b4d5c06f02682f973358ce1a012ea83d04c8e0bb4",
+        "clean_source_sha256": "dac8fb263193ae63be7604462ced4667d26cc4f54a35f1b78afa7c2b0813ae56",
+        "operational_ast_equal_excluding_docstrings": true
+      },
+      {
+        "path": "src/validation_protocol.py",
+        "accepted_image_source_sha256": "699a1b6f596fb253a9821c04f88f76e20732c16bd7bca8fe715ae2b1977a0554",
+        "clean_source_sha256": "211f8b6822e006d16a9b09b23c6b4be0441a72cd06943550d74b931b316155a7",
+        "operational_ast_equal_excluding_docstrings": true
+      }
+    ],
+    "inference_logic_changed": false,
+    "public_frontend_wording_changes_deployed": false,
+    "accepted_frontend_build_comparison": "The prior source reconstruction matched deployed JS/CSS;this later wording cleanup produces a different frontend bundle and has not been deployed.",
+    "image_rebuilt_for_cleanup": false,
+    "scientific_artifacts_changed": false,
+    "accepted_deployment_source_manifest_sha256": "5fe83c633fa1a107ed7f351cb3fa704ee2ab64e07a21397b592279b4af181ce4"
+  },
+  "owner_cash_budget_usd": 0
+}

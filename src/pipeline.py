@@ -44,6 +44,10 @@ from src.data_loader import NHANESDataLoader
 from src.features import NHANESPreprocessor
 from src.models import ModelFactory
 from src.data_dictionary import generate_data_dictionary
+from src.validation_protocol import (
+    choose_validation_threshold, classify_at_threshold, subgroup_fairness,
+)
+from src.artifacts import write_manifest
 
 
 class ModelTrainer:
@@ -59,8 +63,10 @@ class ModelTrainer:
         # Tracking dictionaries to store artifacts for ALL models (FastAPI requirement)
         self.fitted_models = {}
         self.raw_pipelines = {}
+        # Thresholds selected on validation data, never the final holdout.
+        self.selected_thresholds = {}
         
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S_%f")
         self.run_dir = os.path.join(REPORTS_DIR, "results", f"run_{timestamp}")
         os.makedirs(self.run_dir, exist_ok=True)
         print(f">>> Reporting initialized at: {self.run_dir}")
@@ -84,9 +90,17 @@ class ModelTrainer:
         generate_data_dictionary(master_path, dict_path)
         print(f">>> Data dictionary saved: {dict_path}")
 
+        # Retain the exact original 20% stratified holdout selection.
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, stratify=y, random_state=42
         )
+        # Carve an independent 20% validation partition from the remaining 80%.
+        # 64% training, 16% validation, 20% retained final test overall.
+        # The test partition was reused in earlier experiments; it is not a new holdout.
+        X_fit, X_validation, y_fit, y_validation = train_test_split(
+            X_train, y_train, test_size=0.2, stratify=y_train, random_state=42
+        )
+        print(f"Dataset split: training={len(X_fit)}, validation={len(X_validation)}, test={len(X_test)}")
 
         print("\n>>> 2. MODEL TRAINING & TUNING")
         use_class_weight = (balancing_method == 'class_weight')
@@ -145,13 +159,13 @@ class ModelTrainer:
                 pipeline = ImbPipeline(steps)
                 
                 # 3. Evaluate using Stratified 10-Fold CV (Optimizing for ROC-AUC)
-                score = cross_val_score(pipeline, X_train, y_train, cv=cv_split, scoring='roc_auc', n_jobs=-1)
+                score = cross_val_score(pipeline, X_fit, y_fit, cv=cv_split, scoring='roc_auc', n_jobs=-1)
                 return score.mean()
 
             # -----------------------------------------------------------
             # CACHING LOGIC & OPTIMIZATION EXECUTION
             # -----------------------------------------------------------
-            cache_path = os.path.join(MODELS_DIR, f"best_params_{model_name}_{balancing_method}.json")
+            cache_path = os.path.join(MODELS_DIR, f"best_params_{model_name}_{balancing_method}_f1b_train64_seed42.json")
             best_params = None
             
             if use_cached_params and os.path.exists(cache_path):
@@ -161,7 +175,7 @@ class ModelTrainer:
                     best_params = cache_data.get('params', {})
             else:
                 print(f"Running Optuna Bayesian Optimization for {model_name.upper()}...")
-                study = optuna.create_study(direction='maximize')
+                study = optuna.create_study(direction='maximize', sampler=optuna.samplers.TPESampler(seed=42))
                 study.optimize(objective, n_trials=50)
                 
                 best_params = study.best_params
@@ -197,18 +211,26 @@ class ModelTrainer:
             final_steps.append(('model', best_model_instance))
             
             best_est = ImbPipeline(final_steps)
-            best_est.fit(X_train, y_train)
+            best_est.fit(X_fit, y_fit)
             
             print("Calibrating probabilities...")
             calibrated_model = CalibratedClassifierCV(best_est, cv=cv_split, method='isotonic')
-            calibrated_model.fit(X_train, y_train)
+            calibrated_model.fit(X_fit, y_fit)
             
             # -----------------------------------------------------------
             # PREDICTION & EVALUATION
             # -----------------------------------------------------------
+            # Select the operating threshold exclusively from the validation set.
+            validation_proba = calibrated_model.predict_proba(X_validation)[:, 1]
+            threshold_choice = choose_validation_threshold(y_validation, validation_proba)
+            self.selected_thresholds[model_name] = threshold_choice
+            best_thresh = threshold_choice.threshold
+
+            # Evaluate the frozen decision rule on the retained test partition.
+            # Earlier reuse of this partition limits independent performance claims.
             y_proba = calibrated_model.predict_proba(X_test)[:, 1]
-            best_thresh, best_f1 = self._optimize_threshold(y_test, y_proba)
-            y_pred = (y_proba >= best_thresh).astype(int)
+            y_pred = classify_at_threshold(y_proba, best_thresh)
+            best_f1 = f1_score(y_test, y_pred, zero_division=0)
             
             # Calculate expanded metrics
             auc = roc_auc_score(y_test, y_proba)
@@ -237,15 +259,20 @@ class ModelTrainer:
                 "Recall_Sensitivity": sensitivity,
                 "Specificity": specificity,
                 "Best_Threshold": best_thresh,
+                "Threshold_Source": "validation",
+                "Validation_F1": threshold_choice.validation_f1,
                 "Best_Params": str(best_params)
             })
             
             # -----------------------------------------------------------
             # FULL PERSISTENCE (FastAPI Requirement)
             # -----------------------------------------------------------
-            model_path = os.path.join(MODELS_DIR, f"{model_name}_pipeline.pkl")
+            # Persist each model under its own run, never in shared models/.
+            run_models_dir = os.path.join(self.run_dir, "models")
+            os.makedirs(run_models_dir, exist_ok=True)
+            model_path = os.path.join(run_models_dir, f"{model_name}_pipeline.pkl")
             joblib.dump(calibrated_model, model_path)
-            print(f"-> Model saved to {model_path}")
+            print(f"-> Run-specific model saved to {model_path}")
             
             self.fitted_models[model_name] = calibrated_model
             self.raw_pipelines[model_name] = best_est
@@ -257,7 +284,7 @@ class ModelTrainer:
             if model_name in self.raw_pipelines:
                 print(f"\n>>> 3. GENERATING SHAP EXPLANATIONS ({model_name.upper()})")
                 try:
-                    self._generate_shap(self.raw_pipelines[model_name], X_train, X_test, model_name)
+                    self._generate_shap(self.raw_pipelines[model_name], X_fit, X_test, model_name)
                 except Exception as e:
                     print(f"Could not generate SHAP plots for {model_name}: {e}")
         
@@ -265,13 +292,14 @@ class ModelTrainer:
         self._generate_fairness_report(X_test, y_test)
         
         pd.DataFrame(results_summary).to_csv(os.path.join(self.run_dir, "summary_metrics.csv"), index=False)
-        print(f"\n>>> Run Complete. Check outputs in: {self.run_dir}")
+        # Publish the completed-run marker only after models, metrics,
+        # global SHAP, interpretations, and fairness artifacts all exist.
+        write_manifest(
+            self.run_dir, balancing_method, self.selected_thresholds,
+            {"train": len(X_fit), "validation": len(X_validation), "test": len(X_test)},
+        )
+        print(f"\n>>> Verified run complete: {self.run_dir}")
 
-    def _optimize_threshold(self, y_test, y_proba):
-        precisions, recalls, thresholds = precision_recall_curve(y_test, y_proba)
-        f1_scores = 2 * (precisions * recalls) / (precisions + recalls + 1e-10)
-        best_idx = np.argmax(f1_scores)
-        return thresholds[best_idx], f1_scores[best_idx]
 
     @staticmethod
     def _build_shap_label_map(run_dir):
@@ -380,50 +408,43 @@ class ModelTrainer:
             raise e
 
     def _generate_fairness_report(self, X_test, y_test):
-        fairness_results = []
+        """Audit the holdout with the already-selected validation threshold.
+
+        This audit does not retune any threshold on test labels. Missing subgroup
+        values are reported explicitly; rates with zero denominators are blank.
+        """
         target_model = 'xgb' if 'xgb' in self.fitted_models else 'lr'
         model = self.fitted_models[target_model]
-        
+        selection = self.selected_thresholds.get(target_model)
+        if selection is None or selection.selected_from != 'validation':
+            raise RuntimeError("Missing frozen validation threshold for fairness model")
+
         y_proba = model.predict_proba(X_test)[:, 1]
-        best_thresh, _ = self._optimize_threshold(y_test, y_proba)
-        y_pred = (y_proba >= best_thresh).astype(int)
-        
-        test_df = X_test.copy()
-        test_df['True_Label'] = y_test
-        test_df['Prediction'] = y_pred
-        
-        if 'gender_code' in test_df.columns:
-            for gender in test_df['gender_code'].dropna().unique():
-                subset = test_df[test_df['gender_code'] == gender]
-                if len(subset) > 0:
-                    cm = confusion_matrix(subset['True_Label'], subset['Prediction'], labels=[0, 1])
-                    if cm.shape == (2,2):
-                        tn, fp, fn, tp = cm.ravel()
-                        fnr = fn / (fn + tp) if (fn + tp) > 0 else 0
-                        fpr = fp / (fp + tn) if (fp + tn) > 0 else 0
-                        fairness_results.append({
-                            'Attribute': 'Gender', 'Group': gender, 
-                            'FNR (Miss Rate)': fnr, 'FPR (False Alarm Rate)': fpr
-                        })
-        
-        if 'ethnicity_code' in test_df.columns:
-            for eth in test_df['ethnicity_code'].dropna().unique():
-                subset = test_df[test_df['ethnicity_code'] == eth]
-                if len(subset) > 0:
-                    cm = confusion_matrix(subset['True_Label'], subset['Prediction'], labels=[0, 1])
-                    if cm.shape == (2,2):
-                        tn, fp, fn, tp = cm.ravel()
-                        fnr = fn / (fn + tp) if (fn + tp) > 0 else 0
-                        fpr = fp / (fp + tn) if (fp + tn) > 0 else 0
-                        fairness_results.append({
-                            'Attribute': 'Ethnicity', 'Group': eth, 
-                            'FNR (Miss Rate)': fnr, 'FPR (False Alarm Rate)': fpr
-                        })
+        fairness_results = []
+        for attribute, column in [('Gender', 'gender_code'), ('Ethnicity', 'ethnicity_code')]:
+            if column not in X_test.columns:
+                continue
+            for group in subgroup_fairness(
+                y_test, y_proba, X_test[column].to_numpy(), selection
+            ):
+                fairness_results.append({
+                    'Attribute': attribute,
+                    'Group': group['group'],
+                    'FNR (Miss Rate)': group['false_negative_rate'],
+                    'FPR (False Alarm Rate)': group['false_positive_rate'],
+                    'Support': group['support'],
+                    'Actual_Positive': group['actual_positive'],
+                    'Actual_Negative': group['actual_negative'],
+                    'Threshold': selection.threshold,
+                    'Threshold_Source': selection.selected_from,
+                    'Model': target_model.upper(),
+                })
 
         if fairness_results:
-            fair_df = pd.DataFrame(fairness_results)
-            fair_df.to_csv(os.path.join(self.run_dir, "algorithmic_fairness_report.csv"), index=False)
-            print("Fairness report saved.")
+            pd.DataFrame(fairness_results).to_csv(
+                os.path.join(self.run_dir, "algorithmic_fairness_report.csv"), index=False
+            )
+            print("Fairness report saved with frozen threshold and group counts.")
 
     def _save_artifacts(self, model_name, pipeline, y_test, y_pred, y_proba, threshold, pr_auc, raw_pipeline=None):
         report = classification_report(y_test, y_pred, output_dict=True)
@@ -469,16 +490,16 @@ class ModelTrainer:
 
         # Build a structured dict matching the 5 dashboard MetricCards exactly
         metrics = {
-            "AUC-ROC":   {"value": round(auc, 4),         "plain": f"The model correctly ranks a diabetic above a non-diabetic {auc*100:.1f}% of the time across all thresholds."},
-            "F1 Score":  {"value": round(f1, 4),          "plain": f"Harmonic mean of Precision and Recall. Balances false positives and false negatives. Score: {f1*100:.1f}%."},
-            "Precision": {"value": round(precision, 4),   "plain": f"When the model flags someone as diabetic, it is correct {precision*100:.1f}% of the time."},
-            "Recall":    {"value": round(sensitivity, 4), "plain": f"Of all actual diabetic individuals, the model identified {sensitivity*100:.1f}%. It missed {(1-sensitivity)*100:.1f}%."},
-            "Accuracy":  {"value": round(accuracy, 4),    "plain": f"Overall, {accuracy*100:.1f}% of predictions were correct. Note: misleading with imbalanced data."},
+            "AUC-ROC":   {"value": round(auc, 4),         "plain": f"In this test sample, a proxy-positive record is ranked above a proxy-negative record {auc*100:.1f}% of the time, with tied scores counted as half. This is not clinical diagnostic validation."},
+            "F1 Score":  {"value": round(f1, 4),          "plain": f"Harmonic mean of precision and recall for the positive survey label. It does not encode clinical error costs. Score: {f1*100:.1f}%."},
+            "Precision": {"value": round(precision, 4),   "plain": f"Among proxy-positive predictions in this test sample, {precision*100:.1f}% have positive survey labels."},
+            "Recall":    {"value": round(sensitivity, 4), "plain": f"Among proxy-positive test records, {sensitivity*100:.1f}% were predicted positive and {(1-sensitivity)*100:.1f}% negative. This is not established clinical screening performance."},
+            "Accuracy":  {"value": round(accuracy, 4),    "plain": f"Overall, {accuracy*100:.1f}% of test predictions matched survey labels. Interpret alongside per-class metrics."},
         }
 
         lines = [
             f"MODEL PERFORMANCE REPORT: {model_name.upper()}",
-            f"Optimised Threshold: {threshold:.2f}",
+            f"Validation-selected threshold: {threshold:.6f}",
             "=" * 50,
         ]
         for metric, data in metrics.items():

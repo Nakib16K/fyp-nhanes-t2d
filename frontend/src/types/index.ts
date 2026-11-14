@@ -11,6 +11,7 @@ export interface ModelMetrics {
 export interface SHAPFeature {
   feature: string;
   impact: number;
+  indicator_state?: "present" | "absent";
 }
 
 export interface SHAPData {
@@ -23,6 +24,9 @@ export interface LocalSHAPResult {
   model: string;
   shap_values_sorted: SHAPFeature[];
   base_value: number;
+  explanation_scope?: string;
+  explanation_scale?: string;
+  explains_calibrated_probability?: false;
 }
 
 export interface PresetProfile {
@@ -41,7 +45,6 @@ export interface PresetProfile {
   smoked_100_cigs: number;
   family_history_diabetes: number;
   vigorous_activity: number;
-  alcohol_frequency: number;
 }
 
 export interface CustomPredictionInput {
@@ -60,13 +63,16 @@ export interface CustomPredictionInput {
   smoked_100_cigs: number;
   family_history_diabetes: number;
   vigorous_activity: number;
-  alcohol_frequency: number;
 }
 
 export interface ModelPrediction {
   probability_score: number;
   risk_percentage: string;
   prediction_class: string;
+  decision_threshold?: number;
+  threshold_source?: "validation";
+  above_threshold?: boolean;
+  decision_margin_pp?: number;
   error?: string;
 }
 
@@ -87,8 +93,6 @@ export const EDUCATION_LEVELS = {
   3: "High school graduate/GED or equivalent",
   4: "Some college or AA degree",
   5: "College graduate or above",
-  7: "Refused",
-  9: "Don't know",
 } as const;
 
 export type EducationLevel = keyof typeof EDUCATION_LEVELS;
