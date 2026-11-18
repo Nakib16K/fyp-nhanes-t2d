@@ -14,12 +14,29 @@ export async function fetchJSON<T>(
   path: string,
   options?: RequestInit
 ): Promise<T> {
+  const headers = new Headers(options?.headers);
+  if (!headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  const method = (options?.method || "GET").toUpperCase();
+  if (method === "POST" || method === "PUT") {
+    const body = options?.body ?? "";
+    if (typeof body !== "string") {
+      throw new Error("Signed API requests require a string body.");
+    }
+    if (!globalThis.crypto?.subtle) {
+      throw new Error("Secure request hashing requires HTTPS or localhost.");
+    }
+    // CloudFront signs the request; this hash covers the exact UTF-8 body sent.
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(body));
+    headers.set("x-amz-content-sha256", Array.from(new Uint8Array(digest))
+      .map(value => value.toString(16).padStart(2, "0")).join(""));
+  }
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
     ...options,
+    headers,
   });
 
   if (!response.ok) {
