@@ -1,0 +1,17 @@
+# Direct application versions also observed in the accepted Linux runtime.
+# This direct list is not a complete transitive/hash lock. See docs/REPRODUCIBILITY.md.
+# A separately verified future-runtime wheel set is in requirements-runtime-linux.lock.
+fastapi==0.162.2
+uvicorn==0.54.0
+pydantic==2.14.3
+numpy==2.5.4
+pandas==3.1.1
+scipy==1.18.1
+scikit-learn==1.9.1
+imbalanced-learn==0.14.2
+joblib==1.6.0
+xgboost-cpu==3.4.1
+lightgbm==4.7.0
+shap==0.54.1
+
+matplotlib==3.11.2

@@ -1,34 +1,36 @@
-# requirements.txt
+# Windows research/development direct dependency snapshot, 13 November 2026.
+# Versions read from the existing research environment; not a historical training freeze.
+# This is not a transitive wheel/hash lock. See docs/REPRODUCIBILITY.md.
 
 # Core Data Handling
-pandas
-numpy
-requests          # Needed for data downloading from CDC
+pandas==3.1.1
+numpy==2.5.4
+requests==2.34.2          # Needed for data downloading from CDC
 
 # SAS File Ingestion (NHANES Data)
-pyreadstat
+pyreadstat==1.3.7
 
 # Machine Learning & Pipelines
-scikit-learn
-imbalanced-learn  # Essential for SMOTE pipeline integration
-xgboost           # SOTA tree model
-lightgbm          # SOTA tree model
+scikit-learn==1.9.1
+imbalanced-learn==0.14.2  # Essential for SMOTE pipeline integration
+xgboost==3.4.1           # Tree-based model
+lightgbm==4.7.0          # Tree-based model
 
 # Hyperparameter Tuning
-optuna            # For Bayesian Optimization
+optuna==5.0.0            # For Bayesian Optimization
 
 # Model Persistence
-joblib            # Required for saving and loading FastAPI .pkl artifacts
+joblib==1.6.0            # Required for saving and loading FastAPI .pkl artifacts
 
 # Plotting & Explainability
-matplotlib
-seaborn
-shap              # For feature importance and explainability
+matplotlib==3.11.2
+seaborn==0.13.2
+shap==0.54.1              # For feature importance and explainability
 
 # Backend API
-fastapi
-uvicorn
-pydantic
+fastapi==0.162.2
+uvicorn==0.54.0
+pydantic==2.14.3
 
 # Testing
-pytest
+pytest==9.2.0

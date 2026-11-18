@@ -1,0 +1,28 @@
+# Reference recipe predating the separately recorded OS-patched runtime.
+# Actual private Lambda parity passed for that image; this recipe does not recreate it.
+# Base/OS/wheel locking and any future rebuilt-image checks remain separate; see docs/REPRODUCIBILITY.md.
+FROM public.ecr.aws/lambda/python:3.12
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 FYP_STAGE=production \
+    XDG_CACHE_HOME=/tmp/.cache MPLCONFIGDIR=/tmp/matplotlib NUMBA_CACHE_DIR=/tmp/numba
+# Native OpenMP runtime needed by typical LightGBM/scikit-learn Linux wheels.
+RUN dnf install -y libgomp && dnf clean all
+COPY deploy/requirements-inference.txt ${LAMBDA_TASK_ROOT}/deploy/requirements-inference.txt
+COPY deploy/requirements-lambda.txt ${LAMBDA_TASK_ROOT}/deploy/requirements-lambda.txt
+RUN python -m pip install --no-cache-dir --only-binary=:all: \
+    -r ${LAMBDA_TASK_ROOT}/deploy/requirements-inference.txt \
+    -r ${LAMBDA_TASK_ROOT}/deploy/requirements-lambda.txt
+COPY api/ ${LAMBDA_TASK_ROOT}/api/
+COPY src/ ${LAMBDA_TASK_ROOT}/src/
+COPY reports/ ${LAMBDA_TASK_ROOT}/reports/
+COPY deploy/__init__.py ${LAMBDA_TASK_ROOT}/deploy/__init__.py
+COPY deploy/lambda_handler.py ${LAMBDA_TASK_ROOT}/deploy/lambda_handler.py
+# Pre-create directories required by src.config before read-only Lambda execution.
+# Application source and verified model artifacts remain read-only at runtime.
+RUN install -d -m 0755 \
+    ${LAMBDA_TASK_ROOT}/data \
+    ${LAMBDA_TASK_ROOT}/data/raw \
+    ${LAMBDA_TASK_ROOT}/data/processed \
+    ${LAMBDA_TASK_ROOT}/reports/figures \
+    ${LAMBDA_TASK_ROOT}/models
+# Explicit FYP_ALLOWED_HOSTS + FYP_CORS_ORIGINS required at runtime.
+CMD ["deploy.lambda_handler.handler"]

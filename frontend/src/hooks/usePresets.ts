@@ -1,14 +1,22 @@
 import { api } from "../utils/api";
 import { PresetProfile, PredictionResult, LocalSHAPResult } from "../types";
 import { useAsync } from "./useAsync";
-import { useState } from "react";
+import { useRef, useState } from "react";
+
+function withoutProfile<T>(values: Record<string, T>, name: string): Record<string, T> {
+  const next = { ...values };
+  delete next[name];
+  return next;
+}
 
 export function usePresets() {
   const [presetPredictions, setPresetPredictions] = useState<
     Record<string, PredictionResult>
   >({});
-  const [predictionsLoading, setPredictionsLoading] = useState(false);
-  const [predictionsError, setError] = useState<Error | null>(null);
+  const [presetPredictionLoading, setPresetPredictionLoading] = useState<Record<string, boolean>>({});
+  const [presetPredictionErrors, setPresetPredictionErrors] = useState<Record<string, Error>>({});
+  const [presetShapErrors, setPresetShapErrors] = useState<Record<string, Error>>({});
+  const requestVersions = useRef<Record<string, number>>({});
 
   // SHAP state for presets
   const [presetShapResults, setPresetShapResults] = useState<
@@ -22,15 +30,19 @@ export function usePresets() {
     api.getPresets()
   );
 
-  // FIX: Accept the preset object directly instead of looking it up from
-  // presetsState.data inside the async function. This avoids the stale
-  // closure problem where presetsState.data may not be current when
-  // the function executes.
   const predictPreset = async (presetName: string, preset: PresetProfile) => {
-    setPredictionsLoading(true);
-    setError(null);
+    const version = (requestVersions.current[presetName] || 0) + 1;
+    requestVersions.current[presetName] = version;
+    const isCurrent = () => requestVersions.current[presetName] === version;
+    setPresetPredictions((prev) => withoutProfile(prev, presetName));
+    setPresetShapResults((prev) => withoutProfile(prev, presetName));
+    setPresetPredictionErrors((prev) => withoutProfile(prev, presetName));
+    setPresetShapErrors((prev) => withoutProfile(prev, presetName));
+    setPresetShapLoading((prev) => ({ ...prev, [presetName]: false }));
+    setPresetPredictionLoading((prev) => ({ ...prev, [presetName]: true }));
     try {
       const result = await api.predictCustom(preset);
+      if (!isCurrent()) return;
       setPresetPredictions((prev) => ({
         ...prev,
         [presetName]: result,
@@ -40,18 +52,23 @@ export function usePresets() {
       setPresetShapLoading((prev) => ({ ...prev, [presetName]: true }));
       try {
         const shapResult = await api.getLocalShap("XGB", preset);
-        setPresetShapResults((prev) => ({ ...prev, [presetName]: shapResult }));
-      } catch (shapError) {
-        console.error(`SHAP for preset ${presetName} failed:`, shapError);
-        // Non-blocking: prediction still shows even if SHAP fails
+        if (isCurrent()) setPresetShapResults((prev) => ({ ...prev, [presetName]: shapResult }));
+      } catch {
+        if (isCurrent()) setPresetShapErrors((prev) => ({
+          ...prev,
+          [presetName]: new Error("Prediction available, but the local explanation could not be generated. Please try again."),
+        }));
       } finally {
-        setPresetShapLoading((prev) => ({ ...prev, [presetName]: false }));
+        if (isCurrent()) setPresetShapLoading((prev) => ({ ...prev, [presetName]: false }));
       }
 
-    } catch (error) {
-      setError(error instanceof Error ? error : new Error(String(error)));
+    } catch {
+      if (isCurrent()) setPresetPredictionErrors((prev) => ({
+        ...prev,
+        [presetName]: new Error("Prediction unavailable. Please try again."),
+      }));
     } finally {
-      setPredictionsLoading(false);
+      if (isCurrent()) setPresetPredictionLoading((prev) => ({ ...prev, [presetName]: false }));
     }
   };
 
@@ -60,8 +77,11 @@ export function usePresets() {
     presetsLoading: presetsState.isLoading,
     presetsError: presetsState.error,
     presetPredictions,
-    predictionsLoading,
-    predictionsError,
+    predictionsLoading: Object.values(presetPredictionLoading).some(Boolean),
+    predictionsError: Object.values(presetPredictionErrors)[0] || null,
+    presetPredictionLoading,
+    presetPredictionErrors,
+    presetShapErrors,
     predictPreset,
     presetShapResults,
     presetShapLoading,
