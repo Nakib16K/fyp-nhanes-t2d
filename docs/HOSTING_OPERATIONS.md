@@ -12,6 +12,8 @@ The first health request after the 18 November update took 103.5 seconds, and th
 
 For the 103.5-second request, Lambda logged a ten-second initialization timeout before the invocation succeeded. AWS retries on-demand initialization within the function timeout. This release verifies the run and loads the four models before reporting healthy. The cloud logs do not isolate the time spent on each import or model load. [AWS Lambda lifecycle](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtime-environment.html)
 
+On 20 November 2026, three pairs of direct Lambda requests compared the deployed image with a candidate that imports SHAP when an explanation is requested. The median first request fell from 16.8 to 10.6 seconds, and all 18 synthetic requests passed. One candidate start took 64.3 seconds and hit the Lambda initialization timeout. We kept the deployed image because the candidate still produced a long first request. These timings cover direct Lambda invocation. The browser timings above cover the deployed CloudFront path.
+
 The demo uses on-demand capacity with one concurrent API request and shows a connecting message while the backend starts. Occasional use can require a fresh start and overlapping requests can be throttled. These trade-offs suit a small, access-controlled demo with a fixed hosting window. See the [hosting architecture](HOSTING_ARCHITECTURE.md#from-local-use-to-the-hosted-demo).
 
 ## Hosting limits

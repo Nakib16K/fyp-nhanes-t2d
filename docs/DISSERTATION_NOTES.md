@@ -2,6 +2,8 @@
 
 The April dissertation records the submitted experiment and local application, including the four-model comparison, SHAP analyses and two dashboard modes. Its tables and screenshots describe that work. This note explains how to read the April results and what changed in the separate November work. See the [architecture comparison](HOSTING_ARCHITECTURE.md#april-submission) for the relationship between the submitted design and the hosted demo.
 
+Page references in these notes use the PDF page positions of the 86-page April 2026 submission. Section, table and figure numbers identify the same material within that edition.
+
 ## Scope of the project
 
 The project compares four model families using NHANES 2013–2018 data. It estimates a diabetes-status label assembled from HbA1c and medication responses at the time of the survey. The app uses non-invasive predictors, while the research label includes a laboratory measurement. This design cannot measure future incidence or independently distinguish diabetes types.
@@ -20,8 +22,6 @@ The dissertation's conclusion and future work (§7.2–7.3, PDF pp65–66) ident
 The usability review (§6.6, PDF p62) also identified a gap in error recovery. The form has field-level checks, and prediction and explanation failures appear separately. API validation failures still lack field-specific feedback in the dashboard.
 
 ## April methods and November follow-up
-
-Page references below identify PDF pages in the 86-page submitted document.
 
 | Topic | April experiment or application | November treatment and interpretation |
 |---|---|---|
@@ -64,4 +64,4 @@ The dissertation reports 31 tests for the original system. Later tests cover the
 
 ## Reference corrections and document provenance
 
-The [reference corrections](REFERENCE_CORRECTIONS.md) identify mismatched authors, titles and identifiers. A later public copy should label any cover changes and redactions and point readers to these companion notes. Keep the submitted copy as the record of what was assessed in April.
+The [reference corrections](REFERENCE_CORRECTIONS.md) identify mismatched authors, titles and identifiers. The submitted dissertation is the record of the April assessment. A public reference copy can retain its page positions and identify cover changes and redactions. A revised edition can use its own date and page references.
