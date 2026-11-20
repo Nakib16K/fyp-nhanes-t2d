@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface UseAsyncState<T> {
   data: T | null;
@@ -16,26 +16,35 @@ export function useAsync<T>(
     isLoading: immediate,
   });
 
-  const execute = async () => {
-    setState({ data: null, error: null, isLoading: true });
-    try {
-      const result = await asyncFunction();
-      setState({ data: result, error: null, isLoading: false });
-      return result;
-    } catch (error) {
-      setState({
-        data: null,
-        error: error instanceof Error ? error : new Error(String(error)),
-        isLoading: false,
-      });
-    }
-  };
+  // The caller may pass a new inline function each render. Keep the latest
+  // function without making each render cause another request.
+  const taskRef = useRef(asyncFunction);
+  useEffect(() => {
+    taskRef.current = asyncFunction;
+  }, [asyncFunction]);
 
   useEffect(() => {
+    let active = true;
     if (immediate) {
-      execute();
+      setState({ data: null, error: null, isLoading: true });
+      const load = async () => {
+        try {
+          const data = await taskRef.current();
+          if (active) setState({ data, error: null, isLoading: false });
+        } catch (error) {
+          if (active) setState({
+            data: null,
+            error: error instanceof Error ? error : new Error(String(error)),
+            isLoading: false,
+          });
+        }
+      };
+      void load();
+    } else {
+      setState((previous) => ({ ...previous, isLoading: false }));
     }
-  }, []);
+    return () => { active = false; };
+  }, [immediate]);
 
   return state;
 }
