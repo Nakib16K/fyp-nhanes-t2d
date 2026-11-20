@@ -11,6 +11,7 @@ export interface ModelMetrics {
 export interface SHAPFeature {
   feature: string;
   impact: number;
+  indicator_state?: "present" | "absent";
 }
 
 export interface SHAPData {
@@ -23,6 +24,14 @@ export interface LocalSHAPResult {
   model: string;
   shap_values_sorted: SHAPFeature[];
   base_value: number;
+  explanation_scope?: string;
+  explanation_scale?: string;
+  explains_calibrated_probability?: false;
+  explanation_method?: string;
+  explanation_reference?: string;
+  estimator_output?: number;
+  additivity_error?: number;
+  imputed_features?: string[];
 }
 
 export interface PresetProfile {
@@ -41,14 +50,13 @@ export interface PresetProfile {
   smoked_100_cigs: number;
   family_history_diabetes: number;
   vigorous_activity: number;
-  alcohol_frequency: number;
 }
 
 export interface CustomPredictionInput {
   gender_code: number;
   age_years: number;
   ethnicity_code: number;
-  education_level: number;
+  education_level: number | null;
   poverty_ratio: number;
   height_cm: number;
   weight_kg: number;
@@ -60,13 +68,16 @@ export interface CustomPredictionInput {
   smoked_100_cigs: number;
   family_history_diabetes: number;
   vigorous_activity: number;
-  alcohol_frequency: number;
 }
 
 export interface ModelPrediction {
   probability_score: number;
   risk_percentage: string;
   prediction_class: string;
+  decision_threshold?: number;
+  threshold_source?: "validation";
+  above_threshold?: boolean;
+  decision_margin_pp?: number;
   error?: string;
 }
 
@@ -79,6 +90,7 @@ export interface PredictionResult {
   predictions: {
     [modelName: string]: ModelPrediction;
   };
+  imputed_features?: string[];
 }
 
 export const EDUCATION_LEVELS = {

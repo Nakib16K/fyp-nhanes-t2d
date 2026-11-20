@@ -16,6 +16,7 @@ import pandas as pd
 
 from src.features import NHANESPreprocessor
 from src.config import NUMERICAL_VARS, NOMINAL_VARS, ORDINAL_VARS, TARGET_COL
+from src.data_loader import NHANESDataLoader
 
 
 # ------------------------------------------------------------
@@ -52,8 +53,8 @@ def _make_df_with_missing(n=100, missing_col='bmi', missing_frac=0.5):
     # DataFrame with one column at a controlled missingness level
     df = _make_clean_df(n)
     rng = np.random.default_rng(0)
-    mask = rng.random(n) < missing_frac
-    df.loc[mask, missing_col] = np.nan
+    missing_rows = rng.choice(df.index, size=round(n * missing_frac), replace=False)
+    df.loc[missing_rows, missing_col] = np.nan
     return df
 
 
@@ -91,6 +92,12 @@ class TestMissingnessGate:
         assert 'bmi' in prep.cols_to_keep, (
             "bmi at exactly 30% missingness should be kept (gate is <=)"
         )
+
+    def test_column_just_above_threshold_is_dropped(self):
+        df = _make_df_with_missing(missing_col='bmi', missing_frac=0.31)
+        prep = NHANESPreprocessor(missing_threshold=0.30)
+        prep.fit(df)
+        assert 'bmi' not in prep.cols_to_keep
 
 
 # ------------------------------------------------------------
@@ -165,7 +172,7 @@ class TestPreprocessorOutput:
 
 # ------------------------------------------------------------
 # TEST CLASS 3 — LABEL CONSTRUCTION
-# Mirrors the composite ground-truth logic in
+# Exercises the actual composite label construction in
 # data_loader._process_dataset:
 #   diabetic  = HbA1c >= 6.5  OR  insulin == 1  OR  pills == 1
 #   healthy   = HbA1c <  6.5  AND insulin != 1  AND pills != 1
@@ -175,15 +182,13 @@ class TestPreprocessorOutput:
 class TestLabelConstruction:
 
     def _apply_label_logic(self, hba1c, insulin, pills):
-        # Direct mirror of the label construction in data_loader
-        has_high_a1c = hba1c >= 6.5
-        on_insulin   = insulin == 1
-        on_pills     = pills == 1
-
-        is_diabetic = has_high_a1c | on_insulin | on_pills
-        is_healthy  = (hba1c < 6.5) & (~on_insulin) & (~on_pills)
-
-        return np.where(is_diabetic, 1, np.where(is_healthy, 0, np.nan))
+        df = pd.DataFrame({
+            'RIDAGEYR': np.full(len(hba1c), 45),
+            'LBXGH': hba1c,
+            'DIQ050': insulin,
+            'DIQ070': pills,
+        })
+        return NHANESDataLoader()._process_dataset(df)[TARGET_COL].to_numpy()
 
     def test_high_hba1c_alone_gives_label_1(self):
         label = self._apply_label_logic(
@@ -223,31 +228,36 @@ class TestLabelConstruction:
         )
         assert label[0] == 0
 
+    def test_missing_hba1c_without_medication_is_unlabelled(self):
+        label = self._apply_label_logic(
+            hba1c=np.array([np.nan]), insulin=np.array([0]), pills=np.array([0])
+        )
+        assert len(label) == 0
+
+    def test_medication_defines_label_when_hba1c_is_missing(self):
+        label = self._apply_label_logic(
+            hba1c=np.array([np.nan]), insulin=np.array([1]), pills=np.array([0])
+        )
+        assert label[0] == 1
+
 
 # ------------------------------------------------------------
 # TEST CLASS 4 — SENTINEL-CODE CLEANING
-# Verifies that NHANES refused/unknown codes are replaced with
-# NaN in categorical columns only. Numerical columns must not
-# be affected — 7 is a valid age value, for example.
-# Codes tested: [7, 9, 77, 99, 777, 999]
+# Exercises the actual variable-specific response rules.
+# Valid ethnicity and alcohol quantity codes must survive;
+# numerical columns are not response-code cleaned.
 # ------------------------------------------------------------
 
 class TestSpecialCodeCleaning:
 
     def _apply_sentinel_cleaning(self, df):
-        # Direct mirror of _clean_special_codes from data_loader
-        missing_codes = [7, 9, 77, 99, 777, 999]
-        target_cols = [c for c in (NOMINAL_VARS + ORDINAL_VARS) if c in df.columns]
-        df = df.copy()
-        for col in target_cols:
-            df[col] = df[col].replace(missing_codes, np.nan)
-        return df
+        return NHANESDataLoader()._clean_special_codes(df.copy())
 
-    def test_sentinel_7_replaced_with_nan(self):
-        df = pd.DataFrame({NOMINAL_VARS[0]: [1.0, 7.0, 2.0]})
+    def test_yes_no_nonresponse_7_replaced_with_nan(self):
+        df = pd.DataFrame({'family_history_diabetes': [1.0, 7.0, 2.0]})
         result = self._apply_sentinel_cleaning(df)
-        assert pd.isna(result[NOMINAL_VARS[0]].iloc[1]), (
-            "Sentinel value 7 was not replaced with NaN"
+        assert pd.isna(result['family_history_diabetes'].iloc[1]), (
+            "A yes/no nonresponse code was not replaced with NaN"
         )
 
     def test_sentinel_99_replaced_with_nan(self):
@@ -267,10 +277,25 @@ class TestSpecialCodeCleaning:
     def test_numerical_columns_are_not_cleaned(self):
         # Cleaning must not touch numerical columns — 7.0 is a valid age
         df = pd.DataFrame({
-            NOMINAL_VARS[0]: [1.0, 7.0, 2.0],
+            'family_history_diabetes': [1.0, 7.0, 2.0],
             'age_years': [25.0, 7.0, 45.0]
         })
         result = self._apply_sentinel_cleaning(df)
         assert result['age_years'].iloc[1] == 7.0, (
             "Sentinel cleaning incorrectly altered a numerical column (age_years)"
         )
+
+    def test_valid_ethnicity_code_7_is_preserved(self):
+        df = pd.DataFrame({'ethnicity_code': [1.0, 7.0, 6.0]})
+        result = self._apply_sentinel_cleaning(df)
+        assert result['ethnicity_code'].tolist() == [1.0, 7.0, 6.0]
+
+    def test_unused_ethnicity_code_5_is_rejected(self):
+        with pytest.raises(ValueError, match='Invalid RIDRETH3'):
+            self._apply_sentinel_cleaning(pd.DataFrame({'ethnicity_code': [5.0]}))
+
+    def test_alcohol_quantity_codes_are_not_yes_no_nonresponses(self):
+        df = pd.DataFrame({'alcohol_frequency': [7.0, 9.0, 777.0, 999.0]})
+        result = self._apply_sentinel_cleaning(df)
+        assert result['alcohol_frequency'].iloc[:2].tolist() == [7.0, 9.0]
+        assert result['alcohol_frequency'].iloc[2:].isna().all()
