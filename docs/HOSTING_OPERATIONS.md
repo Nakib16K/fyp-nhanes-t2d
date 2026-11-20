@@ -6,7 +6,13 @@ The protected demo is for synthetic examples. The repository contains the applic
 
 On 18 November 2026, the corrected release passed 11 authenticated browser requests and 23 HTTPS reference cases. The checks covered local logistic regression explanations, both education nonresponse choices, model metrics, global SHAP and presets. The release reused a completed scan of the exact image and six earlier viewer tests after checking that the relevant inputs matched. It also checked access denials and a new scheduled watchdog event. [Release provenance](HOSTED_RELEASE_PROVENANCE.json) records the image, source and assets.
 
-The first health request after the update took 103.502 seconds, and the dashboard was ready after 104.213 seconds. A later health request took 117 milliseconds. A separate same-day check returned all four models in 17.273 seconds. Logs showed an initial ten-second AWS initialization timeout before the first request succeeded. The samples show variable first-use delay, and the slow stages have yet to be measured individually. [AWS Lambda lifecycle](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtime-environment.html)
+## Startup and capacity
+
+The first health request after the 18 November update took 103.5 seconds, and the dashboard was ready after 104.2 seconds. A later health request took 117 milliseconds. Separate health checks returned all four models in 17.3 seconds on 18 November and 25.2 seconds on 20 November. These are individual observations.
+
+For the 103.5-second request, Lambda logged a ten-second initialization timeout before the invocation succeeded. AWS retries on-demand initialization within the function timeout. This release verifies the run and loads the four models before reporting healthy. The cloud logs do not isolate the time spent on each import or model load. [AWS Lambda lifecycle](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtime-environment.html)
+
+The demo uses on-demand capacity with one concurrent API request and shows a connecting message while the backend starts. Occasional use can require a fresh start and overlapping requests can be throttled. These trade-offs suit a small, access-controlled demo with a fixed hosting window. See the [hosting architecture](HOSTING_ARCHITECTURE.md#from-local-use-to-the-hosted-demo).
 
 ## Hosting limits
 

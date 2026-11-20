@@ -31,6 +31,8 @@ The original API loaded shared model files and selected a report folder separate
 
 A temporary private Lambda trial came first. It tested the container through authenticated Lambda invocation and removed all four trial resource types afterwards. The browser deployment added CloudFront and private S3. The 18 November release updated the Lambda image, frontend assets and shutdown controls within that existing layout. See the [development history](POST_SUBMISSION_DEVELOPMENT.md).
 
+We chose on-demand Lambda because demo use is occasional and the existing FastAPI app can run with the same verified model files. CloudFront gives the dashboard and API one HTTPS entry point while keeping the origins private. This setup avoids running a dedicated inference server and fits the demo's Free Plan window and scheduled shutdown. The trade-offs are a variable first request after the API has been idle, a shared demo credential and capacity for one concurrent API request. See [startup and capacity](HOSTING_OPERATIONS.md#startup-and-capacity).
+
 ## Hosted request path
 
 ```mermaid
