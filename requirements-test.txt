@@ -1,0 +1,5 @@
+-r requirements.txt
+
+# Tested TestClient stack; separate from the inference image requirements.
+starlette==1.10.0
+httpx==0.28.1

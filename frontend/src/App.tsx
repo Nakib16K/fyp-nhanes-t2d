@@ -76,7 +76,7 @@ function App() {
               Unable to connect to API server
             </p>
             <p className="text-red-700 text-sm mt-2">
-              Make sure the backend server is running on port 8000
+              Please try again shortly.
             </p>
           </div>
         )}
